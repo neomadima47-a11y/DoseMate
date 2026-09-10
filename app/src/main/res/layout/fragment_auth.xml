@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="?android:attr/colorBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:gravity="center_horizontal">
+
+        <ImageView
+            android:id="@+id/iv_logo"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginTop="32dp"
+            android:src="@drawable/ic_launcher_foreground"
+            android:contentDescription="DoseMate Logo" />
+
+        <TextView
+            android:id="@+id/tv_app_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="DoseMate"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary" />
+
+        <TextView
+            android:id="@+id/tv_app_subtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Personal Health &amp; Medication Companion"
+            android:textSize="14sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:gravity="center" />
+
+        <EditText
+            android:id="@+id/et_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:hint="Full Name"
+            android:padding="16dp"
+            android:inputType="textPersonName" />
+
+        <EditText
+            android:id="@+id/et_pin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:hint="4-Digit Security PIN"
+            android:padding="16dp"
+            android:inputType="numberPassword"
+            android:maxLength="4" />
+
+        <Button
+            android:id="@+id/btn_primary_auth"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="24dp"
+            android:text="Sign In / Register" />
+
+        <TextView
+            android:id="@+id/tv_security_note"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="🔒 All health data stays securely on your device"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary" />
+
+    </LinearLayout>
+</ScrollView>

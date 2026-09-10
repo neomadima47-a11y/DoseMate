@@ -1,0 +1,6 @@
+{
+  "name": "DoseMate",
+  "description": "Self-contained mobile health-management app for managing chronic conditions, medication schedules, and health logs offline.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
