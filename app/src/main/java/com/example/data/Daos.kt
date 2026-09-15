@@ -36,8 +36,26 @@ interface MedicationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDoseLogs(logs: List<DoseLogEntity>)
 
-    @Query("UPDATE dose_logs SET status = :status, takenTime = :takenTime WHERE id = :id")
+    @Query("UPDATE dose_logs SET status = :status, takenTime = :takenTime, isPendingSync = 1 WHERE id = :id")
     suspend fun updateDoseStatus(id: Long, status: String, takenTime: String)
+
+    @Query("SELECT COUNT(*) FROM dose_logs WHERE isPendingSync = 1")
+    fun getPendingDoseLogsCount(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM medications WHERE isPendingSync = 1")
+    fun getPendingMedicationsCount(): Flow<Int>
+
+    @Query("SELECT * FROM medications WHERE isPendingSync = 1")
+    suspend fun getPendingSyncMedications(): List<MedicationEntity>
+
+    @Query("SELECT * FROM dose_logs WHERE isPendingSync = 1")
+    suspend fun getPendingSyncDoseLogs(): List<DoseLogEntity>
+
+    @Query("UPDATE medications SET isPendingSync = 0 WHERE isPendingSync = 1")
+    suspend fun markMedicationsSynced()
+
+    @Query("UPDATE dose_logs SET isPendingSync = 0 WHERE isPendingSync = 1")
+    suspend fun markDoseLogsSynced()
 
     @Query("DELETE FROM medications WHERE id = :id")
     suspend fun deleteMedication(id: Long)

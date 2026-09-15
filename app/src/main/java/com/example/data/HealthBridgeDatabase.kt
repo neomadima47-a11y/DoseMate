@@ -13,7 +13,7 @@ import androidx.room.RoomDatabase
         HealthReadingEntity::class,
         ClinicEntity::class
     ],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 abstract class HealthBridgeDatabase : RoomDatabase() {

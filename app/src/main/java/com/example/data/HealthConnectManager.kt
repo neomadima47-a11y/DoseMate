@@ -21,7 +21,11 @@ import java.time.ZoneOffset
 class HealthConnectManager(private val context: Context) {
 
     val sdkStatus: Int
-        get() = HealthConnectClient.getSdkStatus(context)
+        get() = try {
+            HealthConnectClient.getSdkStatus(context)
+        } catch (e: Exception) {
+            HealthConnectClient.SDK_UNAVAILABLE
+        }
 
     val isAvailable: Boolean
         get() = sdkStatus == HealthConnectClient.SDK_AVAILABLE

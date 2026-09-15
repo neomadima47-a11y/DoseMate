@@ -1,6 +1,9 @@
 package com.example.data
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
@@ -14,7 +17,15 @@ class HealthBridgeRepository(
     val medications: Flow<List<MedicationEntity>> = medicationDao.getAllMedications()
     val doseLogs: Flow<List<DoseLogEntity>> = medicationDao.getAllDoseLogs()
     val healthReadings: Flow<List<HealthReadingEntity>> = healthReadingDao.getAllReadings()
-    val pendingSyncCount: Flow<Int> = healthReadingDao.getPendingCount()
+    
+    val pendingSyncCount: Flow<Int> = combine(
+        healthReadingDao.getPendingCount(),
+        medicationDao.getPendingDoseLogsCount(),
+        medicationDao.getPendingMedicationsCount()
+    ) { readings, logs, meds ->
+        readings + logs + meds
+    }
+    
     val clinics: Flow<List<ClinicEntity>> = clinicDao.getAllClinics()
 
     suspend fun initializeDefaultDataIfEmpty() {
@@ -222,31 +233,59 @@ class HealthBridgeRepository(
     }
 
     suspend fun addMedication(name: String, dosage: String, frequency: String, reminderTimes: String) {
-        val medId = medicationDao.insertMedication(
-            MedicationEntity(
-                name = name,
-                dosage = dosage,
-                frequency = frequency,
-                reminderTimes = reminderTimes,
-                status = "Active"
-            )
+        val medication = MedicationEntity(
+            name = name,
+            dosage = dosage,
+            frequency = frequency,
+            reminderTimes = reminderTimes,
+            status = "Active",
+            isPendingSync = true
         )
+        val medId = medicationDao.insertMedication(medication)
+        
         // Add pending dose log
-        medicationDao.insertDoseLogs(
-            listOf(
-                DoseLogEntity(
-                    medicationId = medId,
-                    medicationName = "$name $dosage",
-                    scheduledTime = reminderTimes.split(",").firstOrNull()?.trim() ?: "8:00 AM",
-                    status = "Pending",
-                    date = "Today"
-                )
-            )
+        val doseLog = DoseLogEntity(
+            medicationId = medId,
+            medicationName = "$name $dosage",
+            scheduledTime = reminderTimes.split(",").firstOrNull()?.trim() ?: "8:00 AM",
+            status = "Pending",
+            date = "Today",
+            isPendingSync = true
         )
+        medicationDao.insertDoseLogs(listOf(doseLog))
+
+        // Attempt live sync to Firestore
+        try {
+            val user = userDao.getUserSession().first()
+            val userEmail = user?.email ?: "anonymous"
+            
+            FirestoreClient.getMedicationsCollection()
+                .document("${userEmail}_med_${medication.createdTimestamp}")
+                .set(medication.copy(id = medId))
+        } catch (e: Exception) {}
     }
 
     suspend fun markDoseTaken(doseLogId: Long, timeStr: String) {
         medicationDao.updateDoseStatus(doseLogId, "Taken", timeStr)
+        
+        // Push update to Firestore
+        try {
+            val allLogs = medicationDao.getAllDoseLogs().first()
+            val log = allLogs.find { it.id == doseLogId }
+            if (log != null) {
+                val user = userDao.getUserSession().first()
+                val userEmail = user?.email ?: "anonymous"
+                
+                FirestoreClient.getDoseLogsCollection()
+                    .document("${userEmail}_log_${log.medicationId}_${log.date}_${log.scheduledTime.hashCode()}")
+                    .set(log.copy(isPendingSync = false))
+                    
+                // If sync successful, mark local as synced
+                // (Alternatively, let the bulk sync handle it, but live is better)
+                // For simplicity, we'll let syncOfflineData handle the 'mark synced' logic
+                // or just leave it as is if we want robust sync.
+            }
+        } catch (e: Exception) {}
     }
 
     suspend fun deleteMedication(id: Long) {
@@ -268,19 +307,33 @@ class HealthBridgeRepository(
         val now = java.util.Calendar.getInstance()
         val timeFormat = java.text.SimpleDateFormat("h:mma", java.util.Locale.US)
         val formattedTime = "Today, ${timeFormat.format(now.time).lowercase()}"
+        val timestamp = System.currentTimeMillis()
 
-        healthReadingDao.insertReading(
-            HealthReadingEntity(
-                type = type,
-                value = value,
-                unit = unit,
-                whenTaken = whenTaken,
-                notes = notes,
-                timestamp = System.currentTimeMillis(),
-                displayTime = formattedTime,
-                isPendingSync = true
-            )
+        val reading = HealthReadingEntity(
+            type = type,
+            value = value,
+            unit = unit,
+            whenTaken = whenTaken,
+            notes = notes,
+            timestamp = timestamp,
+            displayTime = formattedTime,
+            isPendingSync = true
         )
+
+        // 1. Save locally first (ensures offline support)
+        healthReadingDao.insertReading(reading)
+
+        // 2. Attempt immediate cloud save
+        try {
+            val user = userDao.getUserSession().first()
+            val userEmail = user?.email ?: "anonymous"
+            
+            FirestoreClient.getReadingsCollection()
+                .document("${userEmail}_reading_$timestamp")
+                .set(reading)
+        } catch (e: Exception) {
+            // Silently fail if offline; manual sync will catch it later
+        }
     }
 
     suspend fun deleteHealthReading(id: Long) {
@@ -292,6 +345,46 @@ class HealthBridgeRepository(
     }
 
     suspend fun syncOfflineData() {
-        healthReadingDao.markAllSynced()
+        val user = userDao.getUserSession().first()
+        val userEmail = user?.email ?: "anonymous"
+
+        // 1. Sync Health Readings
+        val pendingReadings = healthReadingDao.getPendingSyncReadings().first()
+        if (pendingReadings.isNotEmpty()) {
+            pendingReadings.forEach { reading ->
+                try {
+                    FirestoreClient.getReadingsCollection()
+                        .document("${userEmail}_reading_${reading.timestamp}")
+                        .set(reading.copy(isPendingSync = false))
+                } catch (e: Exception) {}
+            }
+            healthReadingDao.markAllSynced()
+        }
+
+        // 2. Sync Medications
+        val pendingMeds = medicationDao.getPendingSyncMedications()
+        if (pendingMeds.isNotEmpty()) {
+            pendingMeds.forEach { med ->
+                try {
+                    FirestoreClient.getMedicationsCollection()
+                        .document("${userEmail}_med_${med.createdTimestamp}")
+                        .set(med.copy(isPendingSync = false))
+                } catch (e: Exception) {}
+            }
+            medicationDao.markMedicationsSynced()
+        }
+
+        // 3. Sync Dose Logs
+        val pendingLogs = medicationDao.getPendingSyncDoseLogs()
+        if (pendingLogs.isNotEmpty()) {
+            pendingLogs.forEach { log ->
+                try {
+                    FirestoreClient.getDoseLogsCollection()
+                        .document("${userEmail}_log_${log.medicationId}_${log.date}_${log.scheduledTime.hashCode()}")
+                        .set(log.copy(isPendingSync = false))
+                } catch (e: Exception) {}
+            }
+            medicationDao.markDoseLogsSynced()
+        }
     }
 }

@@ -64,7 +64,9 @@ data class SerpApiPlace(
             phone = phone.ifBlank { "Available on Google Maps" },
             isNearest = (index == 0),
             latOffsetDp = latOff,
-            lngOffsetDp = lngOff
+            lngOffsetDp = lngOff,
+            latitude = latitude,
+            longitude = longitude
         )
     }
 }

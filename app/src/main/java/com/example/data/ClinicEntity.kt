@@ -13,5 +13,7 @@ data class ClinicEntity(
     val phone: String,
     val isNearest: Boolean = false,
     val latOffsetDp: Float = 0f,
-    val lngOffsetDp: Float = 0f
+    val lngOffsetDp: Float = 0f,
+    val latitude: Double? = null,
+    val longitude: Double? = null
 )

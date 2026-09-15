@@ -1,24 +1,30 @@
-import com.google.gms.googleservices.GoogleServicesPlugin.MissingGoogleServicesStrategy
-
 plugins {
   alias(libs.plugins.android.application)
+  // alias(libs.plugins.kotlin.android)
   alias(libs.plugins.kotlin.compose)
   alias(libs.plugins.google.devtools.ksp)
   alias(libs.plugins.roborazzi)
   alias(libs.plugins.secrets)
   alias(libs.plugins.google.services)
+  // alias(libs.plugins.google.services)
+}
+
+kotlin {
+  jvmToolchain(11)
 }
 
 android {
   namespace = "com.example"
-  compileSdk { version = release(36) { minorApiLevel = 1 } }
+  compileSdk = 37
 
   defaultConfig {
     applicationId = "com.aistudio.healthbridge.app"
     minSdk = 26
-    targetSdk = 36
+    targetSdk = 37
     versionCode = 1
     versionName = "1.0"
+
+    // buildConfigField("String", "MAPBOX_ACCESS_TOKEN", "\"...\"") // Removed hardcoded secret
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -71,7 +77,7 @@ secrets {
   ignoreList.add("FIREBASE_APPCHECK_DEBUG_TOKEN")
 }
 
-googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
+// googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
 
 // Some unused dependencies are commented out below instead of being removed.
 // This makes it easy to add them back in the future if needed.
@@ -98,10 +104,12 @@ dependencies {
   implementation(libs.androidx.navigation.compose)
   implementation(libs.androidx.room.ktx)
   implementation(libs.androidx.room.runtime)
+  implementation(libs.androidx.work.runtime.ktx)
   implementation(libs.androidx.health.connect)
   // implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
-  implementation(libs.firebase.ai)
+  implementation(libs.firebase.firestore)
+  // implementation(libs.firebase.ai)
   // Uncomment to use Firestore:
   // implementation(libs.firebase.firestore)
 
@@ -111,14 +119,26 @@ dependencies {
   // implementation(libs.androidx.credentials)
   // implementation(libs.androidx.credentials.play.services)
   // implementation(libs.googleid)
-  implementation(libs.firebase.appcheck.recaptcha)
+  // implementation(libs.firebase.appcheck.recaptcha)
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
   implementation(libs.logging.interceptor)
   implementation(libs.moshi.kotlin)
   implementation(libs.okhttp)
-  // implementation(libs.play.services.location)
+  implementation(libs.play.services.location)
   implementation(libs.retrofit)
+  implementation(libs.mapbox.maps)
+  implementation(libs.mapbox.compose)
+  implementation(libs.mapbox.common)
+  implementation(libs.mapbox.navigation.android)
+  implementation(libs.mapbox.navigation.ui.maps)
+  implementation(libs.mapbox.navigation.ui.components)
+  implementation(libs.mapbox.navigation.voice)
+  implementation(libs.mapbox.navigation.tripdata)
+  implementation(libs.mapbox.navigation.copilot)
+  implementation(libs.mapbox.search.android)
+  implementation(libs.mapbox.search.ui)
+  implementation(libs.mapbox.search.place.autocomplete)
   testImplementation(libs.androidx.compose.ui.test.junit4)
   testImplementation(libs.androidx.core)
   testImplementation(libs.androidx.junit)

@@ -76,6 +76,7 @@ fun DashboardScreen(
     isSyncing: Boolean,
     syncSuccessMessage: String?,
     onMarkTaken: (Long) -> Unit,
+    onMarkAllDueTaken: () -> Unit,
     onNavigateToLogReading: () -> Unit,
     onNavigateToHealthLog: () -> Unit = {},
     onNavigateToMedications: () -> Unit = {},
@@ -206,6 +207,25 @@ fun DashboardScreen(
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        // Adherence & Streak Tracker Card
+        AdherenceStreakTrackerCard(
+            doseLogs = doseLogs,
+            healthReadings = healthReadings,
+            onMarkAllDueTaken = onMarkAllDueTaken,
+            onNavigateToLogReading = onNavigateToLogReading
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Vitals Trend Card
+        InteractiveVitalsTrendCard(
+            healthReadings = healthReadings,
+            onNavigateToHealthLog = onNavigateToHealthLog,
+            onNavigateToLogReading = onNavigateToLogReading
+        )
 
         Spacer(modifier = Modifier.height(20.dp))
 

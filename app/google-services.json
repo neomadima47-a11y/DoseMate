@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "438560250460",
+    "project_id": "dosemate-b6391",
+    "storage_bucket": "dosemate-b6391.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:438560250460:android:a9d18eb39ada4533cce499",
+        "android_client_info": {
+          "package_name": "com.aistudio.healthbridge.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyATAFE3lmRd1T5URV4rKchSq6eSv3Y0wbs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

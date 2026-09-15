@@ -10,12 +10,14 @@ import androidx.compose.runtime.getValue
 import com.example.ui.MainAppLayout
 import com.example.ui.MainViewModel
 import com.example.ui.theme.HealthBridgeTheme
+// import com.mapbox.common.MapboxOptions
 
 class MainActivity : ComponentActivity() {
     private val mainViewModel: MainViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
         enableEdgeToEdge()
         setContent {
             val userSession by mainViewModel.userSession.collectAsState()

@@ -15,11 +15,16 @@ import com.example.data.HealthConnectManager
 import com.example.data.SerpApiGoogleMapsClient
 import com.example.data.SerpApiPlace
 import com.example.data.SerpApiSearchResult
+import com.example.data.MapboxRoute
+import com.example.data.calculateDistanceKm
+import com.example.data.MapboxClient
 import com.example.data.UserSessionEntity
+import com.example.notifications.MedicationNotificationScheduler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -27,19 +32,13 @@ import java.util.Date
 import java.util.Locale
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository: HealthBridgeRepository
-
-    init {
-        val db = HealthBridgeDatabase.getDatabase(application)
-        repository = HealthBridgeRepository(
+    private val repository: HealthBridgeRepository = HealthBridgeDatabase.getDatabase(application).let { db ->
+        HealthBridgeRepository(
             db.userDao(),
             db.medicationDao(),
             db.healthReadingDao(),
             db.clinicDao()
         )
-        viewModelScope.launch {
-            repository.initializeDefaultDataIfEmpty()
-        }
     }
 
     val userSession: StateFlow<UserSessionEntity?> = repository.userSession
@@ -60,6 +59,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val clinics = repository.clinics
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    init {
+        viewModelScope.launch {
+            repository.initializeDefaultDataIfEmpty()
+        }
+
+        // Automatically schedule medication alerts whenever medications list changes
+        viewModelScope.launch {
+            medications.collectLatest { list ->
+                if (list.isNotEmpty()) {
+                    MedicationNotificationScheduler.scheduleAllActiveMedications(application, list)
+                }
+            }
+        }
+    }
+
     private val serpApiClient = SerpApiGoogleMapsClient()
 
     private val _isSearchingClinics = MutableStateFlow(false)
@@ -76,6 +90,51 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _activeSearchQuery = MutableStateFlow("")
     val activeSearchQuery: StateFlow<String> = _activeSearchQuery.asStateFlow()
+
+    private val _activeRoute = MutableStateFlow<MapboxRoute?>(null)
+    val activeRoute: StateFlow<MapboxRoute?> = _activeRoute.asStateFlow()
+
+    private val _selectedDestination = MutableStateFlow<DisplayClinic?>(null)
+    val selectedDestination: StateFlow<DisplayClinic?> = _selectedDestination.asStateFlow()
+
+    private val mapboxClient = MapboxClient()
+
+    fun getDirections(destination: DisplayClinic, profile: String, userLat: Double, userLng: Double) {
+        _selectedDestination.value = destination
+        viewModelScope.launch {
+            val route = mapboxClient.getDirections(
+                originLat = userLat,
+                originLng = userLng,
+                destLat = destination.latitude,
+                destLng = destination.longitude,
+                profile = profile
+            )
+            _activeRoute.value = route
+        }
+    }
+
+    fun getCustomDirections(lat: Double, lng: Double, name: String, address: String, profile: String, userLat: Double, userLng: Double) {
+        val dest = DisplayClinic(
+            id = "custom_${System.currentTimeMillis()}",
+            name = name,
+            distanceKm = calculateDistanceKm(userLat, userLng, lat, lng),
+            openHours = "Unknown",
+            address = address,
+            phone = "",
+            isNearest = false,
+            latitude = lat,
+            longitude = lng
+        )
+        getDirections(dest, profile, userLat, userLng)
+    }
+
+    fun clearRoute() {
+        _activeRoute.value = null
+    }
+
+    fun clearDestination() {
+        _selectedDestination.value = null
+    }
 
     fun setSerpApiKey(key: String) {
         _serpApiKey.value = key.trim()
@@ -159,6 +218,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
             val currentTimeStr = timeFormat.format(Date())
             repository.markDoseTaken(doseLogId, currentTimeStr)
+        }
+    }
+
+    fun markAllPendingDosesTaken() {
+        viewModelScope.launch {
+            val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+            val currentTimeStr = timeFormat.format(Date())
+            val pendingLogs = doseLogs.value.filter { it.status == "Pending" }
+            pendingLogs.forEach { dose ->
+                repository.markDoseTaken(dose.id, currentTimeStr)
+            }
         }
     }
 

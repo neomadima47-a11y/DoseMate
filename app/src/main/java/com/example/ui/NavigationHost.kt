@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.ui.theme.TealPrimary
 import com.example.util.Strings
+import com.example.BuildConfig
 
 enum class ScreenRoute {
     AUTH,
@@ -51,11 +52,6 @@ fun MainAppLayout(viewModel: MainViewModel) {
     val isSyncing by viewModel.isSyncing.collectAsState()
     val syncSuccessMessage by viewModel.syncSuccessMessage.collectAsState()
     val clinics by viewModel.clinics.collectAsState()
-    val liveClinics by viewModel.liveClinics.collectAsState()
-    val isSearchingClinics by viewModel.isSearchingClinics.collectAsState()
-    val clinicSearchError by viewModel.clinicSearchError.collectAsState()
-    val serpApiKey by viewModel.serpApiKey.collectAsState()
-    val activeSearchQuery by viewModel.activeSearchQuery.collectAsState()
     val isVerifyingDrug by viewModel.isVerifyingDrug.collectAsState()
     val drugVerification by viewModel.drugVerification.collectAsState()
     val drugInteractions by viewModel.drugInteractions.collectAsState()
@@ -138,6 +134,7 @@ fun MainAppLayout(viewModel: MainViewModel) {
                         isSyncing = isSyncing,
                         syncSuccessMessage = syncSuccessMessage,
                         onMarkTaken = { viewModel.markDoseTaken(it) },
+                        onMarkAllDueTaken = { viewModel.markAllPendingDosesTaken() },
                         onNavigateToLogReading = { currentScreen = ScreenRoute.LOG_READING },
                         onNavigateToHealthLog = { currentScreen = ScreenRoute.HEALTH_LOG },
                         onNavigateToMedications = { currentScreen = ScreenRoute.MEDICATIONS },
@@ -193,21 +190,18 @@ fun MainAppLayout(viewModel: MainViewModel) {
                     )
 
                     ScreenRoute.CLINIC_LOCATOR -> ClinicLocatorScreen(
-                        language = currentLanguage,
                         clinics = clinics,
-                        liveClinics = liveClinics,
-                        isSearchingClinics = isSearchingClinics,
-                        clinicSearchError = clinicSearchError,
-                        serpApiKey = serpApiKey,
-                        activeSearchQuery = activeSearchQuery,
-                        healthReadings = healthReadings,
-                        medications = medications,
-                        onSearchClinics = { q, key -> viewModel.searchClinicsGoogleMaps(q, key) },
-                        onClearSearch = { viewModel.clearLiveClinicsSearch() },
-                        onSetSerpApiKey = { viewModel.setSerpApiKey(it) },
-                        onNavigateToLogReading = { currentScreen = ScreenRoute.LOG_READING },
-                        onNavigateToHealthLog = { currentScreen = ScreenRoute.HEALTH_LOG },
-                        onNavigateToMedications = { currentScreen = ScreenRoute.MEDICATIONS }
+                        activeRoute = viewModel.activeRoute.collectAsState().value,
+                        selectedDestination = viewModel.selectedDestination.collectAsState().value,
+                        onGetDirections = { clinic, profile, lat, lng -> viewModel.getDirections(clinic, profile, lat, lng) },
+                        onGetCustomDirections = { dLat, dLng, name, addr, prof, uLat, uLng -> 
+                            viewModel.getCustomDirections(dLat, dLng, name, addr, prof, uLat, uLng) 
+                        },
+                        onClearRoute = { viewModel.clearRoute() },
+                        onClearDestination = { viewModel.clearDestination() },
+                        mapboxToken = BuildConfig.MAPBOX_ACCESS_TOKEN,
+                        recentReadings = healthReadings,
+                        onNavigateToHealthLog = { currentScreen = ScreenRoute.HEALTH_LOG }
                     )
 
                     ScreenRoute.SETTINGS -> SettingsScreen(

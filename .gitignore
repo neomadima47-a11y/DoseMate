@@ -67,3 +67,6 @@ Thumbs.db
 # Environment variables
 .env
 
+# AI Agent Artifacts
+.artifacts/
+
