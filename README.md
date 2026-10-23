@@ -1,95 +1,58 @@
-# DoseMate
+# DoseMate / HealthBridge 🩺
 
-**DoseMate** is a self-contained mobile health management application built for Android. It enables users to manage chronic health conditions, track medication schedules, log daily health readings, and locate nearby health clinics—all with local offline data persistence.
+**DoseMate (HealthBridge)** is a modern, high-performance mobile health management and prescription companion app for Android. Built with a **dual-engine architecture** (100% Native Android XML + Jetpack Compose) in Kotlin, DoseMate empowers patients to track chronic disease regimens, receive exact high-priority alarm notifications, consult an on-device AI medication assistant, locate healthcare facilities with turn-by-turn road navigation, and auto-sync data seamlessly across offline Room SQLite storage and Firebase Cloud Firestore.
 
 ---
 
 ## 🌟 Key Features
 
-- 💊 **Medication Tracker**: Schedule and manage daily medications, dosage amounts, frequencies, and track adherence history.
-- 📊 **Health Vitals Logging**: Record essential health metrics including Blood Pressure, Blood Glucose, Heart Rate, Weight, Temperature, and Symptoms with timestamped notes.
-- 📈 **Health History & Analytics**: View logs, filter by metric type, and monitor historical trends.
-- 🏥 **Clinic Locator**: Browse and find local healthcare clinics and medical centers.
-- 🔒 **Local & Secure Auth**: Protect personal health information with local PIN or credentials.
-- 💾 **Offline-First Persistence**: Powered by Android's Room database to ensure all health logs and schedules remain safely stored on your device.
-- 🎨 **Modern Material 3 Design**: Built using Jetpack Compose with custom dynamic colors, dark theme support, and edge-to-edge layouts.
+- 💊 **Medication Schedule & Multi-Dose Alarms**: Schedule prescriptions once, twice, thrice, or 4 times daily with individual time pickers for every dose.
+- 🔔 **Heads-Up Pop-Up System Alarms**: Powered by Android `AlarmManager.setAlarmClock(...)` with `NotificationCompat.PRIORITY_MAX`, real audio ringtone playback, vibration, and top-of-screen heads-up pop-up banners (works when app is OPEN, CLOSED, or in BACKGROUND).
+- 📅 **Interactive Calendar Medication History**: Custom 7-column monthly calendar grid with **Green (`✓ Taken`)** and **Orange (`⏰ Not Taken`)** date cell highlights. Tap any date cell to inspect exact dose logs, medication types, and completion times.
+- 🤖 **Groq Llama 3.3 70B AI Medication Assistant**: Dedicated conversational AI assistant to answer questions about drug side effects, drug-drug interactions, missed doses, and wellness guidance.
+- 🏥 **MapTiler & OSRM Real-Road Routing**: Leaflet map with MapTiler Outdoor-v4 tiles, MapTiler Geocoding API search, and OSRM turn-by-turn road routing tracing actual street networks.
+- 🔐 **Authentication & Security**: Google Sign-In via Credential Manager, 4-Digit Security PIN, and Firebase Password Reset emails.
+- 🔄 **Automated Offline-First & Cloud Sync**: Room SQLite database persistence paired with real-time `NetworkConnectivityMonitor` and `AutoSyncWorker` background sync to Firebase Cloud Firestore.
+- 🌐 **South African Multi-Language Support**: English, isiZulu, Sesotho, Afrikaans, Sepedi, Setswana, and isiXhosa.
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## 🛠️ Architecture & Tech Stack
 
-- **Language**: Kotlin
-- **UI Framework**: Jetpack Compose (Material Design 3)
-- **Architecture**: MVVM (Model-View-ViewModel) + Clean Data Layer
-- **Local Persistence**: Room Database (SQLite abstraction)
-- **Async & Reactive Flow**: Kotlin Coroutines & `StateFlow`
-- **Navigation**: Type-safe Jetpack Navigation Compose
-- **Testing**: Robolectric & Roborazzi screenshot testing support
-
----
-
-## 📱 Screen Overview
-
-1. **Dashboard (`DashboardScreen`)**: Direct access to upcoming medications, health stats summary, and quick action logs.
-2. **Medications (`MedicationScreen`)**: Comprehensive list and schedule for active medications and daily dose intake tracking.
-3. **Log Reading (`LogReadingScreen`)**: Dedicated input form for capturing vitals with automatic unit suggestions and timestamp logging.
-4. **Health Log History (`HealthHistoryScreen`)**: Interactive log feed with chart visualizers and metric filters.
-5. **Clinic Locator (`ClinicLocatorScreen`)**: Directory of medical centers and emergency contacts.
-6. **Settings (`SettingsScreen`)**: App preferences, local data management, language selection, and theme toggles.
+- **Language**: 100% Kotlin
+- **UI Engine**: Dual-Engine (Native Android XML ViewControllers + Jetpack Compose Material 3)
+- **Local Database**: Room SQLite Database (`HealthBridgeDatabase` v4)
+- **Cloud Database**: Firebase Cloud Firestore (`users`, `health_readings`, `medications`, `dose_logs`)
+- **Authentication**: Firebase Auth, Google Credential Manager (`GetSignInWithGoogleOption`)
+- **Notifications**: AlarmManager, WorkManager (`AutoSyncWorker`), `NotificationCompat` Heads-Up Banners
+- **AI Engine**: Groq Llama 3.3 70B LLM API
+- **Map & Geocoding**: Leaflet.js, MapTiler Outdoor-v4 API, OSRM Routing Engine
 
 ---
 
-## 🚀 Getting Started & Android Studio Setup
+## 📱 Screen Breakdown
 
-### Opening in Android Studio
-
-1. **Download or Clone**:
-   - **Download as ZIP**: In Google AI Studio, click the project menu (or download icon) and select **Download as ZIP**, then extract the ZIP file onto your computer.
-   - **GitHub**: Clone your repository to your local computer:
-     ```bash
-     git clone <your-repository-url>
-     ```
-2. **Open the Project**:
-   - Launch **Android Studio** (Ladybug, Koala, Meerkat, or newer recommended).
-   - Select **Open** (or **File > Open...**).
-   - Navigate to the extracted project folder (the folder containing `build.gradle.kts` and `settings.gradle.kts`) and click **OK**.
-3. **Gradle Sync & JDK**:
-   - The project includes the official **Gradle Wrapper** (`gradlew`, `gradlew.bat`, `gradle-wrapper.jar`), so Android Studio will automatically download the correct Gradle runtime.
-   - Ensure your Gradle JDK is set to **JDK 17 or JDK 21**:
-     - Go to: **Settings / Preferences > Build, Execution, Deployment > Build Tools > Gradle**.
-     - Set **Gradle JDK** to **JDK 21** or **JDK 17** (or standard Android Studio embedded Java).
-   - Let the initial Gradle project sync finish.
-4. **Run the App**:
-   - Connect an Android device with USB debugging enabled or launch an Android Virtual Device (AVD emulator).
-   - Click the green **Run (Play)** button or press `Shift + F10`.
+1. **Sign In & Register ([fragment_auth.xml](file:///C:/Users/ASUS/StudioProjects/DoseMate/app/src/main/res/layout/fragment_auth.xml))**: Google Sign-In, 4-digit PIN authentication, language selector, and Firebase password reset.
+2. **Dashboard / Home ([fragment_dashboard.xml](file:///C:/Users/ASUS/StudioProjects/DoseMate/app/src/main/res/layout/fragment_dashboard.xml))**: Adherence tracker progress bar, weather health tips, quick actions, and active daily doses.
+3. **AI Medication Assistant ([fragment_log_reading.xml](file:///C:/Users/ASUS/StudioProjects/DoseMate/app/src/main/res/layout/fragment_log_reading.xml))**: Groq Llama 3.3 70B AI chat thread with quick inquiry chips.
+4. **Medication Schedule ([fragment_medications.xml](file:///C:/Users/ASUS/StudioProjects/DoseMate/app/src/main/res/layout/fragment_medications.xml))**: Prescription regimen list, individual dose time pickers dialog, and dose reminder test launcher.
+5. **Calendar History ([fragment_health_history.xml](file:///C:/Users/ASUS/StudioProjects/DoseMate/app/src/main/res/layout/fragment_health_history.xml))**: Interactive monthly calendar grid with Green (`✓ Taken`) and Orange (`⏰ Not Taken`) cell highlights.
+6. **Clinic Locator ([fragment_clinic_locator.xml](file:///C:/Users/ASUS/StudioProjects/DoseMate/app/src/main/res/layout/fragment_clinic_locator.xml))**: Embedded MapTiler Outdoor map with OSRM turn-by-turn road navigation.
+7. **Settings ([fragment_settings.xml](file:///C:/Users/ASUS/StudioProjects/DoseMate/app/src/main/res/layout/fragment_settings.xml))**: Patient profile, language preferences, dark mode toggle, emergency contacts, and account logout.
 
 ---
 
-## 🔧 GitHub Push Troubleshooting
-
-If you encounter `Failed to push commit to GitHub: Request contains an invalid argument`:
-
-1. **Repository Name Format**:
-   - When AI Studio asks for the repository name, enter **only a plain name** with letters, numbers, hyphens, or underscores (e.g. `DoseMate` or `dosemate-android`).
-   - ❌ **Do NOT** include spaces (e.g. `Dose Mate Android`).
-   - ❌ **Do NOT** paste full URLs (e.g. `https://github.com/...`).
-   - ❌ **Do NOT** include special characters like `@`, `!`, `#`, `(`, `)`.
-2. **Excluded Build Artifacts**:
-   - The `.gitignore` has been configured to exclude heavy compiled files (`.build-outputs/`, `*.apk`, `build/`, `debug.keystore`), preventing payload size limits during GitHub API exports.
-
----
-
-### Building the Project via Terminal
+## 🚀 Building & Running the Project
 
 ```bash
-# On macOS / Linux:
-./gradlew assembleDebug
-
-# On Windows:
+# On Windows (PowerShell or CMD):
 gradlew.bat assembleDebug
+
+# On macOS or Linux:
+./gradlew assembleDebug
 ```
 
-The compiled APK file will be located at:
+The output APK will be generated at:
 `app/build/outputs/apk/debug/app-debug.apk`
 
 ---
