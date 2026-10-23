@@ -287,42 +287,6 @@
                 android:id="@+id/rv_today_medications"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                android:layout_marginBottom="16dp" />
-
-            <!-- 6. Recent Vitals Header -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="8dp">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Recent Vitals &amp; Logs"
-                    android:textSize="15sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary" />
-
-                <TextView
-                    android:id="@+id/tv_vitals_count_badge"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Sync Ready"
-                    android:textSize="11sp"
-                    android:textColor="@color/teal_accent"
-                    android:background="@drawable/bg_badge_teal"
-                    android:paddingHorizontal="8dp"
-                    android:paddingVertical="2dp" />
-            </LinearLayout>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_recent_logs"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false" />
 
         </LinearLayout>

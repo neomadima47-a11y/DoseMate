@@ -14,6 +14,7 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.R
@@ -464,9 +465,7 @@ class XmlUiController(
         val btnFindClinic = view.findViewById<Button>(R.id.btn_find_clinic)
         val btnHeaderNotifications = view.findViewById<TextView>(R.id.btn_header_notifications)
         val rvTodayMeds = view.findViewById<RecyclerView>(R.id.rv_today_medications)
-        val rvRecentLogs = view.findViewById<RecyclerView>(R.id.rv_recent_logs)
         val tvMedsCount = view.findViewById<TextView>(R.id.tv_meds_count_badge)
-        val tvVitalsCount = view.findViewById<TextView>(R.id.tv_vitals_count_badge)
 
         // User greeting
         val user = viewModel.userSession.value
@@ -500,26 +499,15 @@ class XmlUiController(
         btnFindClinic?.setOnClickListener { showScreen(4) }
         btnHeaderNotifications?.setOnClickListener { showScreen(5) }
         tvMedsCount?.setOnClickListener { showScreen(2) }
-        tvVitalsCount?.setOnClickListener { showScreen(3) }
 
         // Today's Medications RecyclerView
         rvTodayMeds?.layoutManager = LinearLayoutManager(activity)
         rvTodayMeds?.adapter = medicationAdapter
 
-        // Recent Vitals RecyclerView
-        rvRecentLogs?.layoutManager = LinearLayoutManager(activity)
-        rvRecentLogs?.adapter = healthLogAdapter
-
         scope.launch {
             viewModel.doseLogs.collectLatest { list ->
                 medicationAdapter.updateData(list)
                 updateAdherence()
-            }
-        }
-
-        scope.launch {
-            viewModel.healthReadings.collectLatest { list ->
-                healthLogAdapter.updateData(list.take(5))
             }
         }
     }
@@ -807,7 +795,10 @@ class XmlUiController(
         val tvSubtitle = view.findViewById<TextView>(R.id.tv_history_subtitle)
         val tvAdherenceBadge = view.findViewById<TextView>(R.id.tv_history_adherence_badge)
 
-        val calendarView = view.findViewById<android.widget.CalendarView>(R.id.calendar_history_view)
+        val btnPrevMonth = view.findViewById<TextView>(R.id.btn_prev_month)
+        val btnNextMonth = view.findViewById<TextView>(R.id.btn_next_month)
+        val tvMonthYear = view.findViewById<TextView>(R.id.tv_calendar_month_year)
+        val rvCalendarGrid = view.findViewById<RecyclerView>(R.id.rv_calendar_grid)
 
         val tvSelectedDateLabel = view.findViewById<TextView>(R.id.tv_selected_date_label)
         val tvDateAdherenceDesc = view.findViewById<TextView>(R.id.tv_date_adherence_desc)
@@ -819,11 +810,16 @@ class XmlUiController(
         rvLogs?.layoutManager = LinearLayoutManager(activity)
         rvLogs?.adapter = medicationAdapter
 
-        val dateFormat = java.text.SimpleDateFormat("EEEE, MMMM d, yyyy", java.util.Locale.US)
+        val fullDateFormat = java.text.SimpleDateFormat("EEEE, MMMM d, yyyy", java.util.Locale.US)
+        val monthYearFormat = java.text.SimpleDateFormat("MMMM yyyy", java.util.Locale.US)
+
+        var displayCalendar = java.util.Calendar.getInstance().apply {
+            set(java.util.Calendar.DAY_OF_MONTH, 1)
+        }
         var selectedCalendar = java.util.Calendar.getInstance()
 
-        fun updateCalendarDateDoses(cal: java.util.Calendar) {
-            val dateFormatted = dateFormat.format(cal.time)
+        fun updateSelectedDateDetails(cal: java.util.Calendar) {
+            val dateFormatted = fullDateFormat.format(cal.time)
             tvSelectedDateLabel?.text = dateFormatted
 
             val allDoses = viewModel.doseLogs.value
@@ -883,13 +879,110 @@ class XmlUiController(
             tvSubtitle?.text = "${dateDoses.size} prescription logs on $dateFormatted"
         }
 
-        calendarView?.setOnDateChangeListener { _, year, month, dayOfMonth ->
-            selectedCalendar = java.util.Calendar.getInstance().apply {
-                set(java.util.Calendar.YEAR, year)
-                set(java.util.Calendar.MONTH, month)
-                set(java.util.Calendar.DAY_OF_MONTH, dayOfMonth)
+        fun renderCalendarGrid() {
+            tvMonthYear?.text = monthYearFormat.format(displayCalendar.time)
+
+            val monthCal = displayCalendar.clone() as java.util.Calendar
+            monthCal.set(java.util.Calendar.DAY_OF_MONTH, 1)
+            val firstDayOfWeek = monthCal.get(java.util.Calendar.DAY_OF_WEEK) - 1 // 0-based offset for Sun
+            val daysInMonth = monthCal.getActualMaximum(java.util.Calendar.DAY_OF_MONTH)
+
+            val dayItems = mutableListOf<com.example.ui.adapters.CalendarDayItem>()
+
+            // Add blank leading padding cells
+            for (i in 0 until firstDayOfWeek) {
+                dayItems.add(
+                    com.example.ui.adapters.CalendarDayItem(
+                        dayNumber = 0,
+                        fullDateString = "",
+                        calendar = null,
+                        isCurrentMonth = false,
+                        status = com.example.ui.adapters.DayAdherenceStatus.NO_DOSES,
+                        isSelected = false
+                    )
+                )
             }
-            updateCalendarDateDoses(selectedCalendar)
+
+            val allDoses = viewModel.doseLogs.value
+            val activeMeds = viewModel.medications.value.filter { it.status == "Active" }
+
+            val todayFormatted = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
+            val selectedFormatted = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(selectedCalendar.time)
+
+            // Populate all days in current month
+            for (day in 1..daysInMonth) {
+                val dayCal = displayCalendar.clone() as java.util.Calendar
+                dayCal.set(java.util.Calendar.DAY_OF_MONTH, day)
+
+                val dayDateFormatted = fullDateFormat.format(dayCal.time)
+                val dayIsoFormatted = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(dayCal.time)
+
+                val isToday = dayIsoFormatted == todayFormatted
+                val isSelected = dayIsoFormatted == selectedFormatted
+
+                val dateDoses = if (isToday) {
+                    if (allDoses.isNotEmpty()) {
+                        allDoses
+                    } else {
+                        activeMeds.flatMap { med ->
+                            val times = med.reminderTimes.split(",").map { it.trim() }.filter { it.isNotEmpty() }.ifEmpty { listOf("08:00 AM") }
+                            times.map { timeStr ->
+                                DoseLogEntity(
+                                    medicationId = med.id,
+                                    medicationName = if (med.dosage.isNotBlank() && med.dosage != "1 dose") "${med.name} (${med.dosage})" else med.name,
+                                    scheduledTime = timeStr,
+                                    status = "Pending",
+                                    date = "Today"
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    allDoses.filter { it.date == dayDateFormatted || it.date == "Today" }
+                }
+
+                val takenCount = dateDoses.count { it.status == "Taken" }
+                val totalCount = dateDoses.size
+
+                val status = when {
+                    totalCount == 0 -> com.example.ui.adapters.DayAdherenceStatus.NO_DOSES
+                    takenCount == totalCount -> com.example.ui.adapters.DayAdherenceStatus.ALL_TAKEN
+                    takenCount > 0 -> com.example.ui.adapters.DayAdherenceStatus.PARTIAL_PENDING
+                    else -> com.example.ui.adapters.DayAdherenceStatus.PARTIAL_PENDING
+                }
+
+                dayItems.add(
+                    com.example.ui.adapters.CalendarDayItem(
+                        dayNumber = day,
+                        fullDateString = dayDateFormatted,
+                        calendar = dayCal,
+                        isCurrentMonth = true,
+                        status = status,
+                        isSelected = isSelected
+                    )
+                )
+            }
+
+            val calendarAdapter = com.example.ui.adapters.CalendarGridXmlAdapter(dayItems) { clickedDay ->
+                if (clickedDay.calendar != null) {
+                    selectedCalendar = clickedDay.calendar
+                    renderCalendarGrid()
+                    updateSelectedDateDetails(selectedCalendar)
+                }
+            }
+
+            rvCalendarGrid?.layoutManager = GridLayoutManager(activity, 7)
+            rvCalendarGrid?.adapter = calendarAdapter
+        }
+
+        btnPrevMonth?.setOnClickListener {
+            displayCalendar.add(java.util.Calendar.MONTH, -1)
+            renderCalendarGrid()
+        }
+
+        btnNextMonth?.setOnClickListener {
+            displayCalendar.add(java.util.Calendar.MONTH, 1)
+            renderCalendarGrid()
         }
 
         scope.launch {
@@ -897,11 +990,13 @@ class XmlUiController(
                 viewModel.doseLogs,
                 viewModel.medications
             ) { _, _ ->
-                updateCalendarDateDoses(selectedCalendar)
+                renderCalendarGrid()
+                updateSelectedDateDetails(selectedCalendar)
             }.collectLatest {}
         }
 
-        updateCalendarDateDoses(selectedCalendar)
+        renderCalendarGrid()
+        updateSelectedDateDetails(selectedCalendar)
     }
 
     // Active Clinic View references

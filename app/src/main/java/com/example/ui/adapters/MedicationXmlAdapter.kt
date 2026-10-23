@@ -30,32 +30,49 @@ class MedicationXmlAdapter(
         return ViewHolder(view)
     }
 
+    private fun getMedicationTypeLabel(medName: String): String {
+        val lower = medName.lowercase()
+        return when {
+            lower.contains("metformin") || lower.contains("sugar") || lower.contains("glucose") || lower.contains("glipizide") || lower.contains("insulin") ->
+                "🩸 Type 2 Diabetes / Glycemic Medication"
+            lower.contains("amlodipine") || lower.contains("lisinopril") || lower.contains("pressure") || lower.contains("losartan") || lower.contains("atenolol") ->
+                "❤️ Hypertension / Cardiovascular Medication"
+            lower.contains("amoxicillin") || lower.contains("antibiotic") || lower.contains("cipro") || lower.contains("azithromycin") ->
+                "🔬 Antibiotic / Infection Medication"
+            lower.contains("ibuprofen") || lower.contains("paracetamol") || lower.contains("aspirin") || lower.contains("pain") ->
+                "💊 Analgesic / Pain & Anti-inflammatory"
+            else ->
+                "💊 Chronic Prescription Therapy"
+        }
+    }
+
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = items[position]
         holder.tvName.text = item.medicationName
         val isTaken = item.status == "Taken"
 
-        holder.tvDosageTime.text = "Scheduled for ${item.scheduledTime} (${item.date})"
+        val medCategory = getMedicationTypeLabel(item.medicationName)
+        holder.tvDosageTime.text = "$medCategory\n⏰ Scheduled Time: ${item.scheduledTime}"
 
         if (isTaken) {
             holder.tvStatusBadge?.text = "✓ Taken"
             holder.tvStatusBadge?.setTextColor(Color.parseColor("#10B981"))
             holder.tvStatusBadge?.setBackgroundResource(R.drawable.bg_badge_green)
 
-            holder.tvStatusDesc?.text = "Completed today at ${item.takenTime ?: "earlier"}"
+            holder.tvStatusDesc?.text = "Completed on ${item.date} at ${item.takenTime ?: "scheduled time"}"
             holder.tvStatusDesc?.setTextColor(Color.parseColor("#10B981"))
 
             holder.btnAction?.visibility = View.GONE
         } else {
-            holder.tvStatusBadge?.text = "⏰ Due"
+            holder.tvStatusBadge?.text = "⏰ Not Taken"
             holder.tvStatusBadge?.setTextColor(Color.parseColor("#F59E0B"))
             holder.tvStatusBadge?.setBackgroundResource(R.drawable.bg_badge_amber)
 
-            holder.tvStatusDesc?.text = "Scheduled dose: ${item.scheduledTime}"
+            holder.tvStatusDesc?.text = "Due dose scheduled for ${item.scheduledTime}"
             holder.tvStatusDesc?.setTextColor(Color.parseColor("#9CA3AF"))
 
             holder.btnAction?.visibility = View.VISIBLE
-            holder.btnAction?.text = "✓ Take Dose"
+            holder.btnAction?.text = "✓ Mark Taken"
             holder.btnAction?.setOnClickListener {
                 onMarkTaken(item.id)
             }
