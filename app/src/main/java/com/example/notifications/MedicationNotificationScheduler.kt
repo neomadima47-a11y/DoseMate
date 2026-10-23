@@ -1,24 +1,21 @@
 package com.example.notifications
 
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
-import androidx.work.Data
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
+import android.content.Intent
+import android.os.Build
+import android.util.Log
 import com.example.data.MedicationEntity
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 object MedicationNotificationScheduler {
 
     const val TAG_MEDICATION_REMINDER = "medication_reminder"
 
     fun scheduleAllActiveMedications(context: Context, medications: List<MedicationEntity>) {
-        val workManager = WorkManager.getInstance(context)
-        workManager.cancelAllWorkByTag(TAG_MEDICATION_REMINDER)
-
         val activeMeds = medications.filter { it.status.equals("Active", ignoreCase = true) }
         for (med in activeMeds) {
             scheduleMedicationAlerts(context, med)
@@ -34,7 +31,7 @@ object MedicationNotificationScheduler {
             .filter { it.isNotEmpty() }
 
         for (timeStr in timesList) {
-            scheduleSingleDoseTime(
+            scheduleSingleDoseAlarm(
                 context = context,
                 medicationId = medication.id,
                 medicationName = medication.name,
@@ -44,35 +41,61 @@ object MedicationNotificationScheduler {
         }
     }
 
-    private fun scheduleSingleDoseTime(
+    private fun scheduleSingleDoseAlarm(
         context: Context,
         medicationId: Long,
         medicationName: String,
         dosage: String,
         scheduledTime: String
     ) {
-        val delayMs = calculateInitialDelay(scheduledTime)
-        val workTag = "med_${medicationId}_${scheduledTime.replace(" ", "_").replace(":", "_")}"
+        val triggerCal = parseTimeStringToTodayCalendar(scheduledTime) ?: return
+        val now = Calendar.getInstance()
 
-        val inputData = Data.Builder()
-            .putLong("medication_id", medicationId)
-            .putString("medication_name", medicationName)
-            .putString("dosage", dosage)
-            .putString("scheduled_time", scheduledTime)
-            .build()
+        if (triggerCal.before(now)) {
+            triggerCal.add(Calendar.DAY_OF_YEAR, 1) // Next day if time already passed today
+        }
 
-        val request = OneTimeWorkRequestBuilder<MedicationReminderWorker>()
-            .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
-            .setInputData(inputData)
-            .addTag(TAG_MEDICATION_REMINDER)
-            .addTag(workTag)
-            .build()
+        val triggerTimeMs = triggerCal.timeInMillis
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-        WorkManager.getInstance(context).enqueueUniqueWork(
-            workTag,
-            ExistingWorkPolicy.REPLACE,
-            request
+        val intent = Intent(context, MedicationAlarmReceiver::class.java).apply {
+            putExtra("medication_id", medicationId)
+            putExtra("medication_name", medicationName)
+            putExtra("dosage", dosage)
+            putExtra("scheduled_time", scheduledTime)
+        }
+
+        val requestCode = (medicationId * 1000 + scheduledTime.hashCode() % 1000).toInt().coerceAtLeast(1)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                alarmManager.setAlarmClock(
+                    AlarmManager.AlarmClockInfo(triggerTimeMs, pendingIntent),
+                    pendingIntent
+                )
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                alarmManager.setExactAndAllowWhileIdle(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTimeMs,
+                    pendingIntent
+                )
+            } else {
+                alarmManager.setExact(
+                    AlarmManager.RTC_WAKEUP,
+                    triggerTimeMs,
+                    pendingIntent
+                )
+            }
+            Log.d("MedicationScheduler", "Scheduled exact alarm for $medicationName ($dosage) at ${triggerCal.time}")
+        } catch (e: Exception) {
+            Log.e("MedicationScheduler", "Error scheduling exact alarm", e)
+        }
     }
 
     fun scheduleNextDailyOccurrence(
@@ -82,43 +105,28 @@ object MedicationNotificationScheduler {
         dosage: String,
         scheduledTime: String
     ) {
-        val delayMs = 24L * 60L * 60L * 1000L
-        val workTag = "med_${medicationId}_${scheduledTime.replace(" ", "_").replace(":", "_")}"
-
-        val inputData = Data.Builder()
-            .putLong("medication_id", medicationId)
-            .putString("medication_name", medicationName)
-            .putString("dosage", dosage)
-            .putString("scheduled_time", scheduledTime)
-            .build()
-
-        val request = OneTimeWorkRequestBuilder<MedicationReminderWorker>()
-            .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
-            .setInputData(inputData)
-            .addTag(TAG_MEDICATION_REMINDER)
-            .addTag(workTag)
-            .build()
-
-        WorkManager.getInstance(context).enqueueUniqueWork(
-            workTag,
-            ExistingWorkPolicy.REPLACE,
-            request
+        scheduleSingleDoseAlarm(
+            context = context,
+            medicationId = medicationId,
+            medicationName = medicationName,
+            dosage = dosage,
+            scheduledTime = scheduledTime
         )
     }
 
     fun cancelMedicationAlerts(context: Context, medicationId: Long) {
-        val workManager = WorkManager.getInstance(context)
-        workManager.cancelAllWorkByTag("med_${medicationId}")
-    }
-
-    private fun calculateInitialDelay(scheduledTime: String): Long {
-        val parsedCal = parseTimeStringToTodayCalendar(scheduledTime) ?: return 60_000L
-        val now = Calendar.getInstance()
-
-        if (parsedCal.before(now)) {
-            parsedCal.add(Calendar.DAY_OF_YEAR, 1) // Next day
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, MedicationAlarmReceiver::class.java)
+        val requestCode = (medicationId * 1000).toInt().coerceAtLeast(1)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            requestCode,
+            intent,
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        )
+        if (pendingIntent != null) {
+            alarmManager.cancel(pendingIntent)
         }
-        return (parsedCal.timeInMillis - now.timeInMillis).coerceAtLeast(10_000L)
     }
 
     private fun parseTimeStringToTodayCalendar(timeStr: String): Calendar? {

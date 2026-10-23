@@ -1,11 +1,8 @@
 package com.example.data
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import android.util.Log
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 
 class HealthBridgeRepository(
     private val userDao: UserDao,
@@ -13,34 +10,24 @@ class HealthBridgeRepository(
     private val healthReadingDao: HealthReadingDao,
     private val clinicDao: ClinicDao
 ) {
+
     val userSession: Flow<UserSessionEntity?> = userDao.getUserSession()
     val medications: Flow<List<MedicationEntity>> = medicationDao.getAllMedications()
     val doseLogs: Flow<List<DoseLogEntity>> = medicationDao.getAllDoseLogs()
     val healthReadings: Flow<List<HealthReadingEntity>> = healthReadingDao.getAllReadings()
-    
-    val pendingSyncCount: Flow<Int> = combine(
-        healthReadingDao.getPendingCount(),
-        medicationDao.getPendingDoseLogsCount(),
-        medicationDao.getPendingMedicationsCount()
-    ) { readings, logs, meds ->
-        readings + logs + meds
-    }
-    
+    val pendingSyncCount: Flow<Int> = healthReadingDao.getPendingCount()
     val clinics: Flow<List<ClinicEntity>> = clinicDao.getAllClinics()
 
     suspend fun initializeDefaultDataIfEmpty() {
-        // Initialize User Session
-        val user = userDao.getUserSession().first()
-        if (user == null) {
+        // Initialize Default User Session
+        val currentUser = userDao.getUserSession().first()
+        if (currentUser == null) {
             userDao.insertOrUpdateUser(
                 UserSessionEntity(
                     fullName = "Lerato Mokoena",
                     email = "lerato@example.com",
                     preferredLanguage = "English",
-                    isLoggedIn = true,
-                    medicationRemindersEnabled = true,
-                    syncAlertsEnabled = true,
-                    darkThemeEnabled = true
+                    isLoggedIn = true
                 )
             )
         }
@@ -215,12 +202,72 @@ class HealthBridgeRepository(
 
     suspend fun login(email: String, name: String, language: String) {
         val current = userDao.getUserSession().first() ?: UserSessionEntity()
+        val updatedUser = current.copy(
+            email = email,
+            fullName = if (name.isNotBlank()) name else "Patient",
+            preferredLanguage = language,
+            isLoggedIn = true
+        )
+        userDao.insertOrUpdateUser(updatedUser)
+
+        val docId = email.replace(".", "_")
+        val userMap = mapOf(
+            "email" to email,
+            "fullName" to updatedUser.fullName,
+            "preferredLanguage" to language,
+            "lastLoginTimestamp" to System.currentTimeMillis(),
+            "condition" to updatedUser.condition
+        )
+
+        FirestoreClient.getUsersCollection().document(docId).set(userMap)
+            .addOnSuccessListener {
+                Log.d("FirestoreSync", "Successfully synced user profile for $email to Firestore!")
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirestoreSync", "Failed to sync user profile to Firestore (Check Security Rules): ${e.message}", e)
+            }
+
+        syncOfflineData()
+    }
+
+    suspend fun loginWithPin(email: String, name: String, language: String, pin: String) {
+        val current = userDao.getUserSession().first() ?: UserSessionEntity()
+        val updatedUser = current.copy(
+            email = email,
+            fullName = if (name.isNotBlank()) name else "Patient",
+            preferredLanguage = language,
+            securityPin = pin,
+            isLoggedIn = true
+        )
+        userDao.insertOrUpdateUser(updatedUser)
+
+        val docId = email.replace(".", "_")
+        val userMap = mapOf(
+            "email" to email,
+            "fullName" to updatedUser.fullName,
+            "preferredLanguage" to language,
+            "securityPin" to pin,
+            "lastLoginTimestamp" to System.currentTimeMillis(),
+            "condition" to updatedUser.condition
+        )
+
+        FirestoreClient.getUsersCollection().document(docId).set(userMap)
+            .addOnSuccessListener {
+                Log.d("FirestoreSync", "Successfully synced user profile for $email to Firestore!")
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirestoreSync", "Failed to sync user profile to Firestore (Check Security Rules): ${e.message}", e)
+            }
+
+        syncOfflineData()
+    }
+
+    suspend fun updateSecurityPin(email: String, newPin: String) {
+        val current = userDao.getUserSession().first() ?: UserSessionEntity()
         userDao.insertOrUpdateUser(
             current.copy(
                 email = email,
-                fullName = if (name.isNotBlank()) name else "Patient",
-                preferredLanguage = language,
-                isLoggedIn = true
+                securityPin = newPin
             )
         )
     }
@@ -243,7 +290,6 @@ class HealthBridgeRepository(
         )
         val medId = medicationDao.insertMedication(medication)
         
-        // Add pending dose log
         val doseLog = DoseLogEntity(
             medicationId = medId,
             medicationName = "$name $dosage",
@@ -254,38 +300,39 @@ class HealthBridgeRepository(
         )
         medicationDao.insertDoseLogs(listOf(doseLog))
 
-        // Attempt live sync to Firestore
         try {
             val user = userDao.getUserSession().first()
-            val userEmail = user?.email ?: "anonymous"
+            val userEmail = (user?.email ?: "anonymous").replace(".", "_")
             
             FirestoreClient.getMedicationsCollection()
                 .document("${userEmail}_med_${medication.createdTimestamp}")
                 .set(medication.copy(id = medId))
-        } catch (e: Exception) {}
+                .addOnSuccessListener { Log.d("FirestoreSync", "Medication synced to Firestore!") }
+                .addOnFailureListener { e -> Log.e("FirestoreSync", "Medication sync failed: ${e.message}", e) }
+        } catch (e: Exception) {
+            Log.e("FirestoreSync", "Live medication sync error: ${e.message}")
+        }
     }
 
     suspend fun markDoseTaken(doseLogId: Long, timeStr: String) {
         medicationDao.updateDoseStatus(doseLogId, "Taken", timeStr)
         
-        // Push update to Firestore
         try {
             val allLogs = medicationDao.getAllDoseLogs().first()
             val log = allLogs.find { it.id == doseLogId }
             if (log != null) {
                 val user = userDao.getUserSession().first()
-                val userEmail = user?.email ?: "anonymous"
+                val userEmail = (user?.email ?: "anonymous").replace(".", "_")
                 
                 FirestoreClient.getDoseLogsCollection()
                     .document("${userEmail}_log_${log.medicationId}_${log.date}_${log.scheduledTime.hashCode()}")
                     .set(log.copy(isPendingSync = false))
-                    
-                // If sync successful, mark local as synced
-                // (Alternatively, let the bulk sync handle it, but live is better)
-                // For simplicity, we'll let syncOfflineData handle the 'mark synced' logic
-                // or just leave it as is if we want robust sync.
+                    .addOnSuccessListener { Log.d("FirestoreSync", "Dose log synced to Firestore!") }
+                    .addOnFailureListener { e -> Log.e("FirestoreSync", "Dose log sync failed: ${e.message}", e) }
             }
-        } catch (e: Exception) {}
+        } catch (e: Exception) {
+            Log.e("FirestoreSync", "Dose log sync error: ${e.message}")
+        }
     }
 
     suspend fun deleteMedication(id: Long) {
@@ -320,19 +367,19 @@ class HealthBridgeRepository(
             isPendingSync = true
         )
 
-        // 1. Save locally first (ensures offline support)
         healthReadingDao.insertReading(reading)
 
-        // 2. Attempt immediate cloud save
         try {
             val user = userDao.getUserSession().first()
-            val userEmail = user?.email ?: "anonymous"
+            val userEmail = (user?.email ?: "anonymous").replace(".", "_")
             
             FirestoreClient.getReadingsCollection()
                 .document("${userEmail}_reading_$timestamp")
                 .set(reading)
+                .addOnSuccessListener { Log.d("FirestoreSync", "Health reading synced to Firestore!") }
+                .addOnFailureListener { e -> Log.e("FirestoreSync", "Health reading sync failed: ${e.message}", e) }
         } catch (e: Exception) {
-            // Silently fail if offline; manual sync will catch it later
+            Log.e("FirestoreSync", "Health reading sync error: ${e.message}")
         }
     }
 
@@ -346,7 +393,7 @@ class HealthBridgeRepository(
 
     suspend fun syncOfflineData() {
         val user = userDao.getUserSession().first()
-        val userEmail = user?.email ?: "anonymous"
+        val userEmail = (user?.email ?: "anonymous").replace(".", "_")
 
         // 1. Sync Health Readings
         val pendingReadings = healthReadingDao.getPendingSyncReadings().first()
@@ -356,7 +403,11 @@ class HealthBridgeRepository(
                     FirestoreClient.getReadingsCollection()
                         .document("${userEmail}_reading_${reading.timestamp}")
                         .set(reading.copy(isPendingSync = false))
-                } catch (e: Exception) {}
+                        .addOnSuccessListener { Log.d("FirestoreSync", "Reading ${reading.id} synced!") }
+                        .addOnFailureListener { e -> Log.e("FirestoreSync", "Reading sync failed: ${e.message}", e) }
+                } catch (e: Exception) {
+                    Log.e("FirestoreSync", "Reading sync exception: ${e.message}")
+                }
             }
             healthReadingDao.markAllSynced()
         }
@@ -369,7 +420,11 @@ class HealthBridgeRepository(
                     FirestoreClient.getMedicationsCollection()
                         .document("${userEmail}_med_${med.createdTimestamp}")
                         .set(med.copy(isPendingSync = false))
-                } catch (e: Exception) {}
+                        .addOnSuccessListener { Log.d("FirestoreSync", "Medication ${med.id} synced!") }
+                        .addOnFailureListener { e -> Log.e("FirestoreSync", "Medication sync failed: ${e.message}", e) }
+                } catch (e: Exception) {
+                    Log.e("FirestoreSync", "Medication sync exception: ${e.message}")
+                }
             }
             medicationDao.markMedicationsSynced()
         }
@@ -382,7 +437,11 @@ class HealthBridgeRepository(
                     FirestoreClient.getDoseLogsCollection()
                         .document("${userEmail}_log_${log.medicationId}_${log.date}_${log.scheduledTime.hashCode()}")
                         .set(log.copy(isPendingSync = false))
-                } catch (e: Exception) {}
+                        .addOnSuccessListener { Log.d("FirestoreSync", "Dose log ${log.id} synced!") }
+                        .addOnFailureListener { e -> Log.e("FirestoreSync", "Dose log sync failed: ${e.message}", e) }
+                } catch (e: Exception) {
+                    Log.e("FirestoreSync", "Dose log sync exception: ${e.message}")
+                }
             }
             medicationDao.markDoseLogsSynced()
         }

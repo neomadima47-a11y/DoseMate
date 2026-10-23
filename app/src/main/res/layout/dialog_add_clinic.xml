@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:background="@color/dark_surface">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add Your Clinic / Doctor"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="Save facility to directory &amp; get direct in-app map directions"
+        android:textSize="12sp"
+        android:textColor="@color/text_secondary" />
+
+    <EditText
+        android:id="@+id/et_dialog_clinic_name"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="16dp"
+        android:hint="Clinic / Hospital Name (e.g. Steve Biko Academic Hospital)"
+        android:paddingHorizontal="14dp"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_muted"
+        android:textSize="14sp"
+        android:background="@drawable/bg_edit_text" />
+
+    <EditText
+        android:id="@+id/et_dialog_clinic_address"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="10dp"
+        android:hint="Address or Street (e.g. Steve Biko Rd, Prinshof 349-Jr, Pretoria)"
+        android:paddingHorizontal="14dp"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_muted"
+        android:textSize="14sp"
+        android:background="@drawable/bg_edit_text" />
+
+    <EditText
+        android:id="@+id/et_dialog_clinic_phone"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="10dp"
+        android:hint="Phone Number (e.g. +27 12 354 1000)"
+        android:paddingHorizontal="14dp"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_muted"
+        android:textSize="14sp"
+        android:background="@drawable/bg_edit_text" />
+
+    <EditText
+        android:id="@+id/et_dialog_clinic_hours"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="10dp"
+        android:hint="Operating Hours (e.g. Emergency 24/7)"
+        android:paddingHorizontal="14dp"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_muted"
+        android:textSize="14sp"
+        android:background="@drawable/bg_edit_text" />
+
+</LinearLayout>

@@ -79,7 +79,8 @@ fun SettingsScreen(
     healthConnectManager: HealthConnectManager? = null,
     healthConnectStatus: String = "Ready (On-device)",
     healthConnectSyncMsg: String? = null,
-    onSyncToHealthConnect: () -> Unit = {}
+    onSyncToHealthConnect: () -> Unit = {},
+    onSwitchToXmlEngine: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
     val language = userSession?.preferredLanguage ?: "English"
@@ -115,6 +116,39 @@ fun SettingsScreen(
         )
 
         Spacer(modifier = Modifier.height(18.dp))
+
+        if (onSwitchToXmlEngine != null) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "⚡ UI Rendering Engine",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Currently using Jetpack Compose Engine. Switch to Native Android XML Engine.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = { onSwitchToXmlEngine() },
+                        colors = ButtonDefaults.buttonColors(containerColor = TealPrimary),
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Switch to Native XML Engine ⚡", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+        }
 
         // Profile Avatar Card (Screenshot 9)
         Card(

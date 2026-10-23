@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #111818; overflow: hidden; }
+        #map { width: 100%; height: 100%; }
+        .user-pin {
+            background-color: #3B82F6;
+            border: 3px solid #FFFFFF;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.9);
+        }
+        .clinic-pin {
+            background-color: #1D9E75;
+            color: #FFFFFF;
+            border: 2px solid #FFFFFF;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .clinic-pin.active {
+            background-color: #EF4444;
+            transform: scale(1.25);
+            box-shadow: 0 0 16px rgba(239, 68, 68, 0.95);
+        }
+        .leaflet-popup-content-wrapper {
+            background: #1A2322;
+            color: #F3F4F6;
+            border-radius: 12px;
+            border: 1px solid #2E3D35;
+            font-family: sans-serif;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.6);
+        }
+        .leaflet-popup-tip { background: #1A2322; }
+        .popup-title { font-weight: bold; font-size: 14px; color: #2DD4BF; margin-bottom: 3px; }
+        .popup-desc { font-size: 12px; color: #9CA3AF; margin-bottom: 8px; line-height: 1.35; }
+        .popup-btn {
+            background: #1D9E75; color: white; border: none; border-radius: 6px;
+            padding: 6px 12px; font-size: 12px; font-weight: bold; cursor: pointer; width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        const apiKey = 'JhXKARTgXfWBUYsXkPWK';
+        const userLat = -25.7479;
+        const userLng = 28.2293;
+
+        const map = L.map('map', { zoomControl: true, attributionControl: false }).setView([userLat, userLng], 12);
+
+        // MapTiler Outdoor-v4 tile layer
+        L.tileLayer('https://api.maptiler.com/maps/outdoor-v4/{z}/{x}/{y}.png?key=' + apiKey, {
+            maxZoom: 19, tileSize: 512, zoomOffset: -1
+        }).addTo(map);
+
+        // User Location Marker
+        const userIcon = L.divIcon({
+            className: 'user-pin-container',
+            html: '<div class="user-pin"></div>',
+            iconSize: [20, 20], iconAnchor: [10, 10]
+        });
+        const userMarker = L.marker([userLat, userLng], { icon: userIcon })
+            .addTo(map)
+            .bindPopup('<div class="popup-title">📍 Your Location</div><div class="popup-desc">Pretoria / Gauteng Region</div>');
+
+        let clinicMarkers = [];
+        let routePolyline = null;
+
+        function loadClinics(clinicsJson) {
+            try {
+                const clinics = typeof clinicsJson === 'string' ? JSON.parse(clinicsJson) : clinicsJson;
+                clinicMarkers.forEach(m => map.removeLayer(m));
+                clinicMarkers = [];
+
+                clinics.forEach(c => {
+                    const icon = L.divIcon({
+                        className: 'clinic-pin-container',
+                        html: '<div class="clinic-pin" id="pin-' + c.id + '">🏥</div>',
+                        iconSize: [32, 32], iconAnchor: [16, 16]
+                    });
+
+                    const popupContent =
+                        '<div class="popup-title">' + c.name + '</div>' +
+                        '<div class="popup-desc">' + c.address + '<br/>' +
+                        '<b>' + c.distance + ' km away</b> • ' + c.hours + '</div>' +
+                        '<button class="popup-btn" onclick="onPopupRouteClick(' + c.id + ')">🧭 Show Route on Map</button>';
+
+                    const marker = L.marker([c.lat, c.lng], { icon: icon }).addTo(map).bindPopup(popupContent);
+                    marker.clinicData = c;
+                    marker.on('click', () => {
+                        if (window.AndroidBridge && window.AndroidBridge.onClinicClicked) {
+                            window.AndroidBridge.onClinicClicked(c.id, c.name, c.lat, c.lng);
+                        }
+                    });
+                    clinicMarkers.push(marker);
+                });
+            } catch(e) {
+                console.error("Error loading clinics:", e);
+            }
+        }
+
+        function onPopupRouteClick(clinicId) {
+            const marker = clinicMarkers.find(m => m.clinicData.id === clinicId);
+            if (marker) {
+                routeTo(marker.clinicData.lat, marker.clinicData.lng, marker.clinicData.name);
+                if (window.AndroidBridge && window.AndroidBridge.onClinicRouted) {
+                    window.AndroidBridge.onClinicRouted(clinicId, marker.clinicData.name);
+                }
+            }
+        }
+
+        function highlightMarker(destLat, destLng, clinicName) {
+            let destMarker = clinicMarkers.find(m => m.clinicData && Math.abs(m.clinicData.lat - destLat) < 0.002 && Math.abs(m.clinicData.lng - destLng) < 0.002);
+            if (!destMarker) {
+                const newId = Date.now();
+                const icon = L.divIcon({
+                    className: 'clinic-pin-container',
+                    html: '<div class="clinic-pin active" id="pin-' + newId + '">🏥</div>',
+                    iconSize: [32, 32], iconAnchor: [16, 16]
+                });
+                destMarker = L.marker([destLat, destLng], { icon: icon })
+                    .addTo(map)
+                    .bindPopup('<div class="popup-title">🏥 ' + (clinicName || 'Searched Clinic') + '</div><div class="popup-desc">🧭 Real-Road Navigation Active<br/>Pretoria / Gauteng Route</div>');
+                destMarker.clinicData = { id: newId, name: clinicName, lat: destLat, lng: destLng };
+                clinicMarkers.push(destMarker);
+            }
+
+            clinicMarkers.forEach(m => {
+                if (!m.clinicData) return;
+                const el = document.getElementById('pin-' + m.clinicData.id);
+                if (el) {
+                    if (Math.abs(m.clinicData.lat - destLat) < 0.002 && Math.abs(m.clinicData.lng - destLng) < 0.002) {
+                        el.classList.add('active');
+                    } else {
+                        el.classList.remove('active');
+                    }
+                }
+            });
+
+            if (destMarker) {
+                setTimeout(() => { destMarker.openPopup(); }, 350);
+            }
+        }
+
+        function drawFallbackPolyline(destLat, destLng) {
+            const midLat = (userLat + destLat) / 2 + (destLng - userLng) * 0.12;
+            const midLng = (userLng + destLng) / 2 + (userLat - destLat) * 0.12;
+
+            const latlngs = [
+                [userLat, userLng],
+                [userLat + (midLat - userLat) * 0.55, userLng + (midLng - userLng) * 0.4],
+                [midLat, midLng],
+                [midLat + (destLat - midLat) * 0.5, midLng + (destLng - midLng) * 0.65],
+                [destLat, destLng]
+            ];
+
+            routePolyline = L.polyline(latlngs, {
+                color: '#1D9E75', weight: 6, opacity: 0.9, dashArray: '8, 8', lineJoin: 'round'
+            }).addTo(map);
+
+            const bounds = L.latLngBounds([ [userLat, userLng], [destLat, destLng] ]);
+            map.fitBounds(bounds, { padding: [40, 40] });
+        }
+
+        function routeTo(destLat, destLng, clinicName) {
+            if (routePolyline) map.removeLayer(routePolyline);
+
+            // Fetch turn-by-turn road route following actual street networks from OSRM
+            const osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' + userLng + ',' + userLat + ';' + destLng + ',' + destLat + '?overview=full&geometries=geojson';
+
+            fetch(osrmUrl)
+                .then(function(res) { return res.json(); })
+                .then(function(data) {
+                    if (data && data.routes && data.routes.length > 0 && data.routes[0].geometry && data.routes[0].geometry.coordinates) {
+                        const coords = data.routes[0].geometry.coordinates; // [lng, lat]
+                        const latLngs = coords.map(function(pt) { return [pt[1], pt[0]]; }); // [lat, lng]
+
+                        routePolyline = L.polyline(latLngs, {
+                            color: '#1D9E75',
+                            weight: 6,
+                            opacity: 0.95,
+                            lineJoin: 'round',
+                            lineCap: 'round'
+                        }).addTo(map);
+
+                        const bounds = L.latLngBounds(latLngs);
+                        map.fitBounds(bounds, { padding: [40, 40] });
+                    } else {
+                        drawFallbackPolyline(destLat, destLng);
+                    }
+                })
+                .catch(function(err) {
+                    console.warn("OSRM road routing error, fallback path:", err);
+                    drawFallbackPolyline(destLat, destLng);
+                });
+
+            highlightMarker(destLat, destLng, clinicName);
+        }
+
+        function clearRoute() {
+            if (routePolyline) { map.removeLayer(routePolyline); routePolyline = null; }
+            clinicMarkers.forEach(m => {
+                const el = document.getElementById('pin-' + m.clinicData.id);
+                if (el) el.classList.remove('active');
+            });
+            map.setView([userLat, userLng], 12);
+        }
+
+        function centerUser() {
+            map.setView([userLat, userLng], 14);
+            userMarker.openPopup();
+        }
+
+        setTimeout(function() {
+            if (window.AndroidBridge && window.AndroidBridge.onMapReady) {
+                window.AndroidBridge.onMapReady();
+            }
+        }, 300);
+    </script>
+</body>
+</html>

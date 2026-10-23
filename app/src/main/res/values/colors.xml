@@ -1,10 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="purple_200">#FFBB86FC</color>
-    <color name="purple_500">#FF6200EE</color>
-    <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
-    <color name="teal_700">#FF018786</color>
+    <!-- HealthBridge Primary Teal Colors -->
+    <color name="teal_primary">#1D9E75</color>
+    <color name="teal_secondary">#14B8A6</color>
+    <color name="teal_accent">#2DD4BF</color>
+    <color name="teal_dark_bg">#121816</color>
+    <color name="teal_card_bg_dark">#1E2623</color>
+    <color name="dark_background">#111818</color>
+    <color name="dark_surface">#1A2322</color>
+    <color name="dark_surface_variant">#24302E</color>
+    <color name="dark_card_stroke">#2E3D35</color>
+
+    <!-- Status & Alerts -->
+    <color name="health_green">#10B981</color>
+    <color name="health_green_bg">#162E24</color>
+    <color name="health_amber">#F59E0B</color>
+    <color name="health_amber_bg">#2D2416</color>
+    <color name="health_blue">#3B82F6</color>
+    <color name="health_blue_bg">#1E293B</color>
+    <color name="health_red">#EF4444</color>
+    <color name="health_red_bg">#2E1616</color>
+
+    <!-- Text Colors -->
+    <color name="text_primary">#F3F4F6</color>
+    <color name="text_secondary">#9CA3AF</color>
+    <color name="text_muted">#6B7280</color>
+
+    <!-- Base -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
 </resources>

@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
 object GeminiHealthClient {
 
     private const val GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
-    private const val GROQ_DEFAULT_KEY = "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"
+    private val GROQ_DEFAULT_KEY: String get() = try { BuildConfig.GROQ_API_KEY } catch (_: Throwable) { "" }
 
     private const val GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 

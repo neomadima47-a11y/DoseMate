@@ -43,7 +43,10 @@ enum class ScreenRoute {
 }
 
 @Composable
-fun MainAppLayout(viewModel: MainViewModel) {
+fun MainAppLayout(
+    viewModel: MainViewModel,
+    onSwitchToXmlEngine: (() -> Unit)? = null
+) {
     val userSession by viewModel.userSession.collectAsState()
     val medications by viewModel.medications.collectAsState()
     val doseLogs by viewModel.doseLogs.collectAsState()
@@ -217,7 +220,8 @@ fun MainAppLayout(viewModel: MainViewModel) {
                         healthConnectManager = viewModel.healthConnectManager,
                         healthConnectStatus = healthConnectStatus,
                         healthConnectSyncMsg = healthConnectSyncMsg,
-                        onSyncToHealthConnect = { viewModel.syncToHealthConnect() }
+                        onSyncToHealthConnect = { viewModel.syncToHealthConnect() },
+                        onSwitchToXmlEngine = onSwitchToXmlEngine
                     )
 
                     else -> {}

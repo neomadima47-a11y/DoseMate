@@ -9,6 +9,7 @@ data class UserSessionEntity(
     val fullName: String = "Lerato Mokoena",
     val email: String = "lerato@example.com",
     val preferredLanguage: String = "English",
+    val securityPin: String = "1234",
     val isLoggedIn: Boolean = true,
     val medicationRemindersEnabled: Boolean = true,
     val syncAlertsEnabled: Boolean = true,

@@ -59,6 +59,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val clinics = repository.clinics
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val networkMonitor = com.example.data.NetworkConnectivityMonitor(application)
+    val isNetworkConnected: StateFlow<Boolean> = networkMonitor.isConnected
+
     init {
         viewModelScope.launch {
             repository.initializeDefaultDataIfEmpty()
@@ -72,6 +75,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
+
+        // Automatic Background Sync whenever phone connects/reconnects to the internet
+        viewModelScope.launch {
+            networkMonitor.isConnected.collectLatest { connected ->
+                if (connected) {
+                    repository.syncOfflineData()
+                }
+            }
+        }
+
+        // Schedule periodic background sync worker
+        com.example.data.AutoSyncWorker.schedulePeriodicAutoSync(application)
     }
 
     private val serpApiClient = SerpApiGoogleMapsClient()
@@ -170,6 +185,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _liveClinics.value = emptyList()
         _activeSearchQuery.value = ""
         _clinicSearchError.value = null
+    }
+
+    fun addCustomClinic(name: String, address: String, phone: String, openHours: String, distanceKm: Double = 1.2, latOffsetDp: Float = 0f, lngOffsetDp: Float = 0f, latitude: Double? = null, longitude: Double? = null) {
+        viewModelScope.launch {
+            val clinic = com.example.data.ClinicEntity(
+                name = name,
+                address = address,
+                phone = phone,
+                openHours = openHours,
+                distanceKm = distanceKm,
+                latOffsetDp = latOffsetDp,
+                lngOffsetDp = lngOffsetDp,
+                latitude = latitude ?: (-25.7479 + (Math.random() - 0.5) * 0.05),
+                longitude = longitude ?: (28.2293 + (Math.random() - 0.5) * 0.05)
+            )
+            repository.addClinics(listOf(clinic))
+        }
     }
 
     private val openFdaClient = OpenFdaDrugClient()
@@ -349,15 +381,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun login(email: String, name: String, language: String) {
+    fun login(email: String, name: String, language: String, pin: String = "1234") {
         viewModelScope.launch {
-            repository.login(email, name, language)
+            repository.loginWithPin(email, name, language, pin)
         }
     }
 
-    fun register(email: String, name: String, language: String) {
+    fun register(email: String, name: String, language: String, pin: String = "1234") {
         viewModelScope.launch {
-            repository.login(email, name, language)
+            repository.loginWithPin(email, name, language, pin)
+        }
+    }
+
+    fun resetPin(email: String, newPin: String) {
+        viewModelScope.launch {
+            repository.updateSecurityPin(email, newPin)
         }
     }
 
