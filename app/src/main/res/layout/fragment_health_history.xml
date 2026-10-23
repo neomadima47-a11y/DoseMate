@@ -24,8 +24,8 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Health Log"
-                android:textSize="24sp"
+                android:text="Medication History"
+                android:textSize="22sp"
                 android:textStyle="bold"
                 android:textColor="@color/text_primary" />
 
@@ -33,224 +33,151 @@
                 android:id="@+id/tv_history_subtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="All recorded vitals · synchronized with server"
+                android:text="Select calendar date to inspect taken doses"
                 android:textSize="12sp"
                 android:textColor="@color/text_secondary" />
         </LinearLayout>
 
-        <Button
-            android:id="@+id/btn_history_log_new"
-            android:layout_width="wrap_content"
-            android:layout_height="38dp"
-            android:text="✚ Log New"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:textColor="@color/white"
-            android:background="@drawable/bg_button_teal"
-            android:paddingHorizontal="14dp" />
-    </LinearLayout>
-
-    <!-- 2. Critical Vitals Warning Banner (Visible if high/critical reading exists) -->
-    <LinearLayout
-        android:id="@+id/layout_critical_vitals_banner"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="@drawable/bg_badge_red"
-        android:layout_marginHorizontal="18dp"
-        android:layout_marginBottom="12dp"
-        android:padding="12dp"
-        android:visibility="gone">
-
         <TextView
+            android:id="@+id/tv_history_adherence_badge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="⚠️"
-            android:textSize="18sp"
-            android:layout_marginEnd="8dp" />
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Elevated vitals logged. Review nearest clinics &amp; doctors."
-            android:textSize="12sp"
+            android:text="✓ 100% Adherence"
+            android:textSize="11sp"
             android:textStyle="bold"
-            android:textColor="@color/health_red" />
-
-        <TextView
-            android:id="@+id/btn_banner_find_clinic"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Find Clinic →"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:textColor="@color/health_red" />
+            android:textColor="@color/health_green"
+            android:background="@drawable/bg_badge_green"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="5dp" />
     </LinearLayout>
 
-    <!-- 3. Category Filter Chips (All, Sugar, Pressure, Symptoms) -->
-    <LinearLayout
-        android:id="@+id/layout_filter_tabs"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:orientation="horizontal"
-        android:layout_marginHorizontal="18dp"
-        android:layout_marginBottom="12dp"
-        android:background="@drawable/bg_card_elevated"
-        android:padding="3dp"
-        android:weightSum="4">
-
-        <TextView
-            android:id="@+id/chip_filter_all"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="All Logs"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:textColor="@color/white"
-            android:background="@drawable/bg_button_teal"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <TextView
-            android:id="@+id/chip_filter_sugar"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="Sugar"
-            android:textSize="11sp"
-            android:textColor="@color/text_secondary"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <TextView
-            android:id="@+id/chip_filter_pressure"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="Pressure"
-            android:textSize="11sp"
-            android:textColor="@color/text_secondary"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <TextView
-            android:id="@+id/chip_filter_symptoms"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="Symptoms"
-            android:textSize="11sp"
-            android:textColor="@color/text_secondary"
-            android:clickable="true"
-            android:focusable="true" />
-    </LinearLayout>
-
-    <!-- 4. Trend / Clinical Target Summary Card -->
-    <LinearLayout
-        android:id="@+id/card_trend_summary"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="@drawable/bg_card_dark"
-        android:layout_marginHorizontal="18dp"
-        android:layout_marginBottom="12dp"
-        android:padding="14dp">
+        android:layout_height="match_parent"
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:orientation="vertical"
+            android:paddingHorizontal="18dp"
+            android:paddingBottom="32dp">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <!-- 2. Interactive Calendar Card -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="📈"
-                android:textSize="16sp"
-                android:layout_marginEnd="8dp" />
+                android:orientation="vertical"
+                android:background="@drawable/bg_card_dark"
+                android:padding="12dp"
+                android:layout_marginBottom="14dp">
 
-            <TextView
-                android:id="@+id/tv_trend_card_title"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Vitals Trend &amp; Clinical Analysis"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:textColor="@color/text_primary" />
+                <CalendarView
+                    android:id="@+id/calendar_history_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:theme="@style/Theme.MyApplication" />
+            </LinearLayout>
 
-            <TextView
-                android:id="@+id/tv_trend_target_badge"
-                android:layout_width="wrap_content"
+            <!-- 3. Selected Date Adherence Summary Card -->
+            <LinearLayout
+                android:id="@+id/card_date_summary"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Target: Normal"
-                android:textSize="11sp"
-                android:textColor="@color/health_green"
-                android:background="@drawable/bg_badge_green"
-                android:paddingHorizontal="8dp"
-                android:paddingVertical="2dp" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_card_elevated"
+                android:padding="14dp"
+                android:layout_marginBottom="14dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📅 "
+                    android:textSize="18sp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_selected_date_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Today's Prescriptions"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/text_primary" />
+
+                    <TextView
+                        android:id="@+id/tv_date_adherence_desc"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="All scheduled doses taken as prescribed"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_secondary" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tv_date_adherence_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="✓ Taken"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/health_green"
+                    android:background="@drawable/bg_badge_green"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="3dp" />
+            </LinearLayout>
+
+            <!-- 4. Empty State View -->
+            <LinearLayout
+                android:id="@+id/layout_empty_history"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="32dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:gravity="center"
+                    android:text="💊"
+                    android:textSize="32sp"
+                    android:background="@drawable/bg_circle_icon"
+                    android:layout_marginBottom="12dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="No Medication Logs for This Date"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="No doses were scheduled or logged for the selected calendar date."
+                    android:textSize="12sp"
+                    android:textColor="@color/text_secondary"
+                    android:gravity="center" />
+            </LinearLayout>
+
+            <!-- 5. History Doses RecyclerView List -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_history_logs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false" />
+
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/tv_trend_card_desc"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Readings are evaluated against clinical guidelines for chronic disease management."
-            android:textSize="12sp"
-            android:textColor="@color/text_secondary" />
-    </LinearLayout>
-
-    <!-- 5. Empty State -->
-    <LinearLayout
-        android:id="@+id/layout_empty_history"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:padding="32dp"
-        android:visibility="gone">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="📊"
-            android:textSize="48sp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="No Health Readings Found"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_primary" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:text="Tap 'Log New' to record blood pressure, glucose, or health symptoms."
-            android:textSize="13sp"
-            android:textColor="@color/text_secondary"
-            android:gravity="center" />
-    </LinearLayout>
-
-    <!-- 6. History Logs List -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_history_logs"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:paddingHorizontal="18dp"
-        android:paddingBottom="16dp"
-        android:clipToPadding="false" />
+    </ScrollView>
 
 </LinearLayout>

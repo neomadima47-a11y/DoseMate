@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.R
 import com.example.data.ClinicEntity
+import com.example.data.DoseLogEntity
 import com.example.data.GeminiHealthClient
 import com.example.ui.adapters.ClinicXmlAdapter
 import com.example.ui.adapters.HealthLogXmlAdapter
@@ -523,169 +524,14 @@ class XmlUiController(
         }
     }
 
-    // --- 3. Log Reading View Setup ---
+    // --- 3. AI Medication & Health Assistant View Setup ---
     fun setupLogReadingView(view: View) {
-        // Header history navigation
-        view.findViewById<LinearLayout>(R.id.btn_header_history)?.setOnClickListener {
-            showScreen(3)
-        }
-
-        // State Variables
-        var selectedType = "Blood Pressure"
-        var systolic = 120
-        var diastolic = 80
-        var glucose = 5.4
-        val selectedSymptoms = mutableSetOf<String>()
-
-        // Tabs & Containers
-        val tabBp = view.findViewById<LinearLayout>(R.id.tab_blood_pressure)
-        val tabSugar = view.findViewById<LinearLayout>(R.id.tab_blood_sugar)
-        val tabSymptom = view.findViewById<LinearLayout>(R.id.tab_symptom)
-        val tabBpTitle = view.findViewById<TextView>(R.id.tab_bp_title)
-        val tabSugarTitle = view.findViewById<TextView>(R.id.tab_sugar_title)
-        val tabSymptomTitle = view.findViewById<TextView>(R.id.tab_symptom_title)
-
-        val layoutBp = view.findViewById<LinearLayout>(R.id.layout_bp_container)
-        val layoutSugar = view.findViewById<LinearLayout>(R.id.layout_sugar_container)
-        val layoutSymptom = view.findViewById<LinearLayout>(R.id.layout_symptom_container)
-
-        // BP & Sugar Controls
-        val tvSysVal = view.findViewById<TextView>(R.id.tv_systolic_value)
-        val tvDiaVal = view.findViewById<TextView>(R.id.tv_diastolic_value)
-        val tvGlucoseVal = view.findViewById<TextView>(R.id.tv_glucose_value)
-        val etSymptomInput = view.findViewById<EditText>(R.id.et_symptom_input)
-
-        // Clinical Gauge Elements
-        val tvGaugeBadgeIcon = view.findViewById<TextView>(R.id.tv_gauge_badge_icon)
-        val tvGaugeClassification = view.findViewById<TextView>(R.id.tv_gauge_classification)
-        val tvGaugeSeverityTag = view.findViewById<TextView>(R.id.tv_gauge_severity_tag)
-        val tvGaugeFeedbackMessage = view.findViewById<TextView>(R.id.tv_gauge_feedback_message)
-        val layoutRedFlag = view.findViewById<LinearLayout>(R.id.layout_red_flag_warning)
-        val tvRedFlag = view.findViewById<TextView>(R.id.tv_red_flag_warning)
-
-        // Dynamic Clinical Evaluation Routine
-        fun updateEvaluation() {
-            val symptomNotes = etSymptomInput?.text?.toString() ?: ""
-            val evaluation = if (selectedType == "Blood Pressure") {
-                ClinicalEvaluator.evaluateBloodPressure(systolic.toDouble(), diastolic.toDouble(), symptomNotes, "Resting")
-            } else {
-                ClinicalEvaluator.evaluateBloodSugar(glucose, "mmol/L", symptomNotes, "Fasting")
-            }
-
-            tvGaugeClassification?.text = evaluation.classification
-            tvGaugeFeedbackMessage?.text = evaluation.feedbackMessage
-
-            val (tagColor, tagBg, severityName) = when (evaluation.severity) {
-                com.example.util.HealthSeverity.NORMAL -> Triple(android.graphics.Color.parseColor("#10B981"), R.drawable.bg_badge_green, "Optimal")
-                com.example.util.HealthSeverity.ELEVATED -> Triple(android.graphics.Color.parseColor("#F59E0B"), R.drawable.bg_badge_amber, "Elevated")
-                com.example.util.HealthSeverity.WARNING -> Triple(android.graphics.Color.parseColor("#F59E0B"), R.drawable.bg_badge_amber, "Stage 1")
-                com.example.util.HealthSeverity.CRITICAL -> Triple(android.graphics.Color.parseColor("#EF4444"), R.drawable.bg_badge_red, "Crisis")
-                else -> Triple(android.graphics.Color.parseColor("#3B82F6"), R.drawable.bg_badge_teal, "Info")
-            }
-
-            tvGaugeBadgeIcon?.setTextColor(tagColor)
-            tvGaugeSeverityTag?.text = severityName
-            tvGaugeSeverityTag?.setTextColor(tagColor)
-            tvGaugeSeverityTag?.setBackgroundResource(tagBg)
-
-            if (evaluation.severity == com.example.util.HealthSeverity.CRITICAL) {
-                layoutRedFlag?.visibility = View.VISIBLE
-                tvRedFlag?.text = "Urgent: Clinical threshold exceeded. Seek clinical advice promptly."
-            } else {
-                layoutRedFlag?.visibility = View.GONE
-            }
-        }
-
-        // Segment Switcher Routine
-        fun switchTab(type: String) {
-            selectedType = type
-            tabBp?.setBackgroundResource(if (type == "Blood Pressure") R.drawable.bg_tab_selected else R.drawable.bg_tab_unselected)
-            tabBpTitle?.setTextColor(if (type == "Blood Pressure") android.graphics.Color.WHITE else android.graphics.Color.parseColor("#F3F4F6"))
-
-            tabSugar?.setBackgroundResource(if (type == "Blood Glucose") R.drawable.bg_tab_selected else R.drawable.bg_tab_unselected)
-            tabSugarTitle?.setTextColor(if (type == "Blood Glucose") android.graphics.Color.WHITE else android.graphics.Color.parseColor("#F3F4F6"))
-
-            tabSymptom?.setBackgroundResource(if (type == "Symptom") R.drawable.bg_tab_selected else R.drawable.bg_tab_unselected)
-            tabSymptomTitle?.setTextColor(if (type == "Symptom") android.graphics.Color.WHITE else android.graphics.Color.parseColor("#F3F4F6"))
-
-            layoutBp?.visibility = if (type == "Blood Pressure") View.VISIBLE else View.GONE
-            layoutSugar?.visibility = if (type == "Blood Glucose") View.VISIBLE else View.GONE
-            layoutSymptom?.visibility = if (type == "Symptom") View.VISIBLE else View.GONE
-
-            updateEvaluation()
-        }
-
-        tabBp?.setOnClickListener { switchTab("Blood Pressure") }
-        tabSugar?.setOnClickListener { switchTab("Blood Glucose") }
-        tabSymptom?.setOnClickListener { switchTab("Symptom") }
-
-        // Stepper Handlers
-        view.findViewById<TextView>(R.id.btn_systolic_minus)?.setOnClickListener {
-            if (systolic > 70) { systolic -= 2; tvSysVal?.text = "$systolic"; updateEvaluation() }
-        }
-        view.findViewById<TextView>(R.id.btn_systolic_plus)?.setOnClickListener {
-            if (systolic < 240) { systolic += 2; tvSysVal?.text = "$systolic"; updateEvaluation() }
-        }
-        view.findViewById<TextView>(R.id.btn_diastolic_minus)?.setOnClickListener {
-            if (diastolic > 40) { diastolic -= 2; tvDiaVal?.text = "$diastolic"; updateEvaluation() }
-        }
-        view.findViewById<TextView>(R.id.btn_diastolic_plus)?.setOnClickListener {
-            if (diastolic < 150) { diastolic += 2; tvDiaVal?.text = "$diastolic"; updateEvaluation() }
-        }
-
-        view.findViewById<TextView>(R.id.btn_glucose_minus)?.setOnClickListener {
-            if (glucose > 2.0) {
-                glucose = Math.round((glucose - 0.2) * 10.0) / 10.0
-                tvGlucoseVal?.text = String.format(java.util.Locale.US, "%.1f", glucose)
-                updateEvaluation()
-            }
-        }
-        view.findViewById<TextView>(R.id.btn_glucose_plus)?.setOnClickListener {
-            if (glucose < 25.0) {
-                glucose = Math.round((glucose + 0.2) * 10.0) / 10.0
-                tvGlucoseVal?.text = String.format(java.util.Locale.US, "%.1f", glucose)
-                updateEvaluation()
-            }
-        }
-
-        // Quick Presets
-        view.findViewById<TextView>(R.id.chip_bp_115_75)?.setOnClickListener {
-            systolic = 115; diastolic = 75; tvSysVal?.text = "115"; tvDiaVal?.text = "75"; updateEvaluation()
-        }
-        view.findViewById<TextView>(R.id.chip_bp_120_80)?.setOnClickListener {
-            systolic = 120; diastolic = 80; tvSysVal?.text = "120"; tvDiaVal?.text = "80"; updateEvaluation()
-        }
-        view.findViewById<TextView>(R.id.chip_bp_130_85)?.setOnClickListener {
-            systolic = 130; diastolic = 85; tvSysVal?.text = "130"; tvDiaVal?.text = "85"; updateEvaluation()
-        }
-        view.findViewById<TextView>(R.id.chip_bp_142_92)?.setOnClickListener {
-            systolic = 142; diastolic = 92; tvSysVal?.text = "142"; tvDiaVal?.text = "92"; updateEvaluation()
-        }
-        view.findViewById<TextView>(R.id.chip_bp_160_100)?.setOnClickListener {
-            systolic = 160; diastolic = 100; tvSysVal?.text = "160"; tvDiaVal?.text = "100"; updateEvaluation()
-        }
-
-        view.findViewById<TextView>(R.id.chip_glucose_42)?.setOnClickListener {
-            glucose = 4.2; tvGlucoseVal?.text = "4.2"; updateEvaluation()
-        }
-        view.findViewById<TextView>(R.id.chip_glucose_54)?.setOnClickListener {
-            glucose = 5.4; tvGlucoseVal?.text = "5.4"; updateEvaluation()
-        }
-        view.findViewById<TextView>(R.id.chip_glucose_68)?.setOnClickListener {
-            glucose = 6.8; tvGlucoseVal?.text = "6.8"; updateEvaluation()
-        }
-        view.findViewById<TextView>(R.id.chip_glucose_85)?.setOnClickListener {
-            glucose = 8.5; tvGlucoseVal?.text = "8.5"; updateEvaluation()
-        }
-        view.findViewById<TextView>(R.id.chip_glucose_115)?.setOnClickListener {
-            glucose = 11.5; tvGlucoseVal?.text = "11.5"; updateEvaluation()
-        }
-
-        // Groq AI Chatbot
         val etGroqInput = view.findViewById<EditText>(R.id.et_groq_chat_input)
         val btnSendGroq = view.findViewById<TextView>(R.id.btn_send_groq_chat)
         val layoutGroqReplying = view.findViewById<LinearLayout>(R.id.layout_groq_replying)
         val layoutChatContainer = view.findViewById<LinearLayout>(R.id.layout_chat_messages_container)
+        val btnClearChat = view.findViewById<TextView>(R.id.btn_clear_chat)
+
         val chatHistory = mutableListOf<GeminiHealthClient.ChatMessagePayload>()
 
         fun addChatMessage(text: String, isUser: Boolean) {
@@ -694,21 +540,22 @@ class XmlUiController(
                 textSize = 12f
                 setTextColor(if (isUser) android.graphics.Color.WHITE else android.graphics.Color.parseColor("#F3F4F6"))
                 setBackgroundResource(if (isUser) R.drawable.bg_chat_user else R.drawable.bg_chat_ai)
-                setPadding(12, 10, 12, 10)
+                setPadding(16, 12, 16, 12)
             }
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
-                topMargin = 8
+                topMargin = 10
                 gravity = if (isUser) android.view.Gravity.END else android.view.Gravity.START
             }
             msgView.layoutParams = params
             layoutChatContainer?.addView(msgView)
         }
 
+        // Initial welcoming greeting from Groq Llama 3.3 AI Assistant
         if (layoutChatContainer?.childCount == 0) {
-            val initialGreeting = "Hello! I am your Groq Llama 3.3 AI clinical assistant. How can I help you understand your health readings, symptoms, diet, or lifestyle today?"
+            val initialGreeting = "Hello! I am your AI Medication & Health Assistant powered by Groq Llama 3.3. Ask me anything about your prescriptions, side effects, drug interactions, or wellness advice!"
             addChatMessage(initialGreeting, isUser = false)
             chatHistory.add(GeminiHealthClient.ChatMessagePayload(role = "assistant", content = initialGreeting))
         }
@@ -722,7 +569,8 @@ class XmlUiController(
             etGroqInput?.setText("")
             layoutGroqReplying?.visibility = View.VISIBLE
 
-            val currentVitalsContext = "Current Selection: $selectedType, Reading: ${if (selectedType == "Blood Pressure") "$systolic/$diastolic mmHg" else "$glucose mmol/L"}, Classification: ${tvGaugeClassification?.text}"
+            val activeMeds = viewModel.medications.value.map { "${it.name} (${it.dosage})" }.joinToString(", ")
+            val currentVitalsContext = "Active Prescriptions on file: ${activeMeds.ifBlank { "Metformin 500mg, Amlodipine 5mg" }}"
 
             scope.launch {
                 val result = GeminiHealthClient.chatWithGroq(
@@ -732,7 +580,7 @@ class XmlUiController(
                 )
                 withContext(Dispatchers.Main) {
                     layoutGroqReplying?.visibility = View.GONE
-                    val aiResponse = result.getOrElse { "I'm available to answer any health, diet, or vital questions you have." }
+                    val aiResponse = result.getOrElse { "I am available to answer any questions about your medications, side effects, or dosage." }
                     addChatMessage(aiResponse, isUser = false)
                     chatHistory.add(GeminiHealthClient.ChatMessagePayload(role = "assistant", content = aiResponse))
                 }
@@ -740,74 +588,30 @@ class XmlUiController(
         }
 
         btnSendGroq?.setOnClickListener {
-            val query = etGroqInput?.text.toString()
+            val query = etGroqInput?.text?.toString() ?: ""
             sendUserMessage(query)
         }
 
-        view.findViewById<TextView>(R.id.btn_clear_chat)?.setOnClickListener {
+        btnClearChat?.setOnClickListener {
             layoutChatContainer?.removeAllViews()
             chatHistory.clear()
-            val resetGreeting = "Chat reset. Ask me any medical, wellness, diet, or prescription questions!"
+            val resetGreeting = "Chat history cleared. Ask me any questions about your medications or health!"
             addChatMessage(resetGreeting, isUser = false)
             chatHistory.add(GeminiHealthClient.ChatMessagePayload(role = "assistant", content = resetGreeting))
         }
 
-        val inquiryMap = mapOf(
-            R.id.chip_inquiry_foods to "What foods are best for heart health and blood pressure?",
-            R.id.chip_inquiry_hydration to "How much water should I drink daily for optimal health?",
-            R.id.chip_inquiry_sleep to "Give me sleep tips to manage stress and blood pressure.",
-            R.id.chip_inquiry_bp to "What is a normal healthy blood pressure range?"
-        )
+        // Quick Suggestion Inquiry Chips
+        val chipSideEffects = view.findViewById<TextView>(R.id.chip_inquiry_side_effects)
+        val chipInteractions = view.findViewById<TextView>(R.id.chip_inquiry_interactions)
+        val chipMissedDose = view.findViewById<TextView>(R.id.chip_inquiry_missed_dose)
+        val chipFoods = view.findViewById<TextView>(R.id.chip_inquiry_foods)
+        val chipSleep = view.findViewById<TextView>(R.id.chip_inquiry_sleep)
 
-        for ((chipId, inquiry) in inquiryMap) {
-            view.findViewById<TextView>(chipId)?.setOnClickListener {
-                sendUserMessage(inquiry)
-            }
-        }
-
-        // Save Action
-        val layoutSaved = view.findViewById<LinearLayout>(R.id.layout_saved_confirmation)
-        val tvSavedSummary = view.findViewById<TextView>(R.id.tv_saved_summary)
-
-        view.findViewById<Button>(R.id.btn_save_to_health_log)?.setOnClickListener {
-            val (valStr, unitStr) = when (selectedType) {
-                "Blood Pressure" -> Pair("$systolic/$diastolic", "mmHg")
-                "Blood Glucose" -> Pair(String.format(java.util.Locale.US, "%.1f", glucose), "mmol/L")
-                else -> Pair("Logged", "Symptom")
-            }
-            val notes = etSymptomInput?.text?.toString() ?: ""
-            viewModel.addHealthReading(selectedType, valStr, unitStr, "Today", notes)
-
-            layoutSaved?.visibility = View.VISIBLE
-            tvSavedSummary?.text = "$selectedType: $valStr $unitStr logged successfully."
-            Toast.makeText(activity, "Saved to Health Log!", Toast.LENGTH_SHORT).show()
-        }
-
-        view.findViewById<TextView>(R.id.btn_dismiss_confirmation)?.setOnClickListener {
-            layoutSaved?.visibility = View.GONE
-        }
-        view.findViewById<Button>(R.id.btn_view_in_health_log)?.setOnClickListener {
-            showScreen(3)
-        }
-        view.findViewById<Button>(R.id.btn_log_another)?.setOnClickListener {
-            layoutSaved?.visibility = View.GONE
-        }
-
-        // Quick Action Nav Row
-        view.findViewById<Button>(R.id.btn_share_vitals_row)?.setOnClickListener {
-            val text = "DoseMate Clinical Vitals: $selectedType -> ${if (selectedType == "Blood Pressure") "$systolic/$diastolic mmHg" else "$glucose mmol/L"} (${tvGaugeClassification?.text})"
-            val intent = Intent(Intent.ACTION_SEND).apply {
-                type = "text/plain"
-                putExtra(Intent.EXTRA_TEXT, text)
-            }
-            activity.startActivity(Intent.createChooser(intent, "Share Clinical Vitals"))
-        }
-
-        view.findViewById<Button>(R.id.btn_nav_meds_row)?.setOnClickListener { showScreen(2) }
-        view.findViewById<Button>(R.id.btn_nav_dashboard_row)?.setOnClickListener { showScreen(0) }
-
-        // Initial evaluation run
-        updateEvaluation()
+        chipSideEffects?.setOnClickListener { sendUserMessage("What are common side effects of Metformin?") }
+        chipInteractions?.setOnClickListener { sendUserMessage("Is it safe to take Ibuprofen with Lisinopril?") }
+        chipMissedDose?.setOnClickListener { sendUserMessage("What should I do if I forget to take a dose of my prescription?") }
+        chipFoods?.setOnClickListener { sendUserMessage("What foods are best for managing high blood pressure?") }
+        chipSleep?.setOnClickListener { sendUserMessage("Give me sleep tips to manage stress and heart health.") }
     }
 
     // --- 4. Medications View Setup ---
@@ -825,14 +629,34 @@ class XmlUiController(
 
         var currentFilter = "All"
 
-        fun applyFilter(filter: String) {
+        fun applyFilter(filter: String, doseList: List<DoseLogEntity> = viewModel.doseLogs.value) {
             currentFilter = filter
-            val doses = viewModel.doseLogs.value
-            val filtered = when (filter) {
-                "Due" -> doses.filter { it.status != "Taken" }
-                "Completed" -> doses.filter { it.status == "Taken" }
-                else -> doses
+
+            val activeMeds = viewModel.medications.value.filter { it.status == "Active" }
+
+            val displayDoses = if (doseList.isNotEmpty()) {
+                doseList
+            } else {
+                activeMeds.flatMap { med ->
+                    val times = med.reminderTimes.split(",").map { it.trim() }.filter { it.isNotEmpty() }.ifEmpty { listOf("08:00 AM") }
+                    times.map { timeStr ->
+                        DoseLogEntity(
+                            medicationId = med.id,
+                            medicationName = if (med.dosage.isNotBlank() && med.dosage != "1 dose" && med.dosage != "Standard dose") "${med.name} (${med.dosage})" else med.name,
+                            scheduledTime = timeStr,
+                            status = "Pending",
+                            date = "Today"
+                        )
+                    }
+                }
             }
+
+            val filtered = when (filter) {
+                "Due" -> displayDoses.filter { it.status != "Taken" }
+                "Completed" -> displayDoses.filter { it.status == "Taken" }
+                else -> displayDoses
+            }
+
             medicationAdapter.updateData(filtered)
             layoutEmpty?.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
             rvList?.visibility = if (filtered.isEmpty()) View.GONE else View.VISIBLE
@@ -870,9 +694,12 @@ class XmlUiController(
         }
 
         scope.launch {
-            viewModel.doseLogs.collectLatest {
-                applyFilter(currentFilter)
-            }
+            kotlinx.coroutines.flow.combine(
+                viewModel.doseLogs,
+                viewModel.medications
+            ) { doses, _ ->
+                applyFilter(currentFilter, doses)
+            }.collectLatest {}
         }
 
         applyFilter("All")
@@ -978,101 +805,103 @@ class XmlUiController(
     // --- 5. Health Log View Setup ---
     fun setupHealthLogView(view: View) {
         val tvSubtitle = view.findViewById<TextView>(R.id.tv_history_subtitle)
-        val btnLogNew = view.findViewById<Button>(R.id.btn_history_log_new)
-        val bannerCritical = view.findViewById<LinearLayout>(R.id.layout_critical_vitals_banner)
-        val btnBannerFindClinic = view.findViewById<TextView>(R.id.btn_banner_find_clinic)
-        val chipAll = view.findViewById<TextView>(R.id.chip_filter_all)
-        val chipSugar = view.findViewById<TextView>(R.id.chip_filter_sugar)
-        val chipPressure = view.findViewById<TextView>(R.id.chip_filter_pressure)
-        val chipSymptoms = view.findViewById<TextView>(R.id.chip_filter_symptoms)
-        val tvTargetBadge = view.findViewById<TextView>(R.id.tv_trend_target_badge)
-        val tvTrendDesc = view.findViewById<TextView>(R.id.tv_trend_card_desc)
+        val tvAdherenceBadge = view.findViewById<TextView>(R.id.tv_history_adherence_badge)
+
+        val calendarView = view.findViewById<android.widget.CalendarView>(R.id.calendar_history_view)
+
+        val tvSelectedDateLabel = view.findViewById<TextView>(R.id.tv_selected_date_label)
+        val tvDateAdherenceDesc = view.findViewById<TextView>(R.id.tv_date_adherence_desc)
+        val tvDateAdherenceStatus = view.findViewById<TextView>(R.id.tv_date_adherence_status)
+
         val rvLogs = view.findViewById<RecyclerView>(R.id.rv_history_logs)
         val layoutEmpty = view.findViewById<LinearLayout>(R.id.layout_empty_history)
 
-        val fullHistoryAdapter = HealthLogXmlAdapter()
         rvLogs?.layoutManager = LinearLayoutManager(activity)
-        rvLogs?.adapter = fullHistoryAdapter
+        rvLogs?.adapter = medicationAdapter
 
-        val allReadings = viewModel.healthReadings.value
+        val dateFormat = java.text.SimpleDateFormat("EEEE, MMMM d, yyyy", java.util.Locale.US)
+        var selectedCalendar = java.util.Calendar.getInstance()
 
-        // Dynamic Filter Handler (All, Sugar, Pressure, Symptoms)
-        fun applyFilter(filter: String) {
-            val filtered = when (filter) {
-                "Sugar" -> allReadings.filter { 
-                    it.type.contains("sugar", ignoreCase = true) || it.type.contains("glucose", ignoreCase = true) 
+        fun updateCalendarDateDoses(cal: java.util.Calendar) {
+            val dateFormatted = dateFormat.format(cal.time)
+            tvSelectedDateLabel?.text = dateFormatted
+
+            val allDoses = viewModel.doseLogs.value
+            val isToday = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(cal.time) ==
+                    java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
+
+            val activeMeds = viewModel.medications.value.filter { it.status == "Active" }
+
+            val dateDoses = if (isToday) {
+                if (allDoses.isNotEmpty()) {
+                    allDoses
+                } else {
+                    activeMeds.flatMap { med ->
+                        val times = med.reminderTimes.split(",").map { it.trim() }.filter { it.isNotEmpty() }.ifEmpty { listOf("08:00 AM") }
+                        times.map { timeStr ->
+                            DoseLogEntity(
+                                medicationId = med.id,
+                                medicationName = if (med.dosage.isNotBlank() && med.dosage != "1 dose") "${med.name} (${med.dosage})" else med.name,
+                                scheduledTime = timeStr,
+                                status = "Pending",
+                                date = "Today"
+                            )
+                        }
+                    }
                 }
-                "Pressure" -> allReadings.filter { 
-                    it.type.contains("pressure", ignoreCase = true) 
-                }
-                "Symptoms" -> allReadings.filter { 
-                    it.type.contains("symptom", ignoreCase = true) 
-                }
-                else -> allReadings
+            } else {
+                allDoses.filter { it.date == dateFormatted || it.date == "Today" }
             }
 
-            fullHistoryAdapter.updateData(filtered)
-            layoutEmpty?.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
-            rvLogs?.visibility = if (filtered.isEmpty()) View.GONE else View.VISIBLE
+            medicationAdapter.updateData(dateDoses)
+            layoutEmpty?.visibility = if (dateDoses.isEmpty()) View.VISIBLE else View.GONE
+            rvLogs?.visibility = if (dateDoses.isEmpty()) View.GONE else View.VISIBLE
 
-            // Toggle Visual Tab State
-            val chips = listOfNotNull(chipAll, chipSugar, chipPressure, chipSymptoms)
-            chips.forEach { chip ->
-                val isSelected = (chip == chipAll && filter == "All") ||
-                                 (chip == chipSugar && filter == "Sugar") ||
-                                 (chip == chipPressure && filter == "Pressure") ||
-                                 (chip == chipSymptoms && filter == "Symptoms")
-                chip.setBackgroundResource(if (isSelected) R.drawable.bg_button_teal else 0)
-                chip.setTextColor(android.graphics.Color.parseColor(if (isSelected) "#FFFFFF" else "#9CA3AF"))
+            val takenCount = dateDoses.count { it.status == "Taken" }
+            val totalCount = dateDoses.size
+            val pct = if (totalCount > 0) (takenCount * 100) / totalCount else 100
+
+            tvAdherenceBadge?.text = "✓ $pct% Adherence"
+
+            if (totalCount == 0) {
+                tvDateAdherenceStatus?.text = "No Prescriptions"
+                tvDateAdherenceStatus?.setTextColor(android.graphics.Color.parseColor("#9CA3AF"))
+                tvDateAdherenceStatus?.setBackgroundResource(R.drawable.bg_badge_teal)
+                tvDateAdherenceDesc?.text = "No doses were scheduled or logged for this date"
+            } else if (pct == 100) {
+                tvDateAdherenceStatus?.text = "✓ 100% Taken"
+                tvDateAdherenceStatus?.setTextColor(android.graphics.Color.parseColor("#10B981"))
+                tvDateAdherenceStatus?.setBackgroundResource(R.drawable.bg_badge_green)
+                tvDateAdherenceDesc?.text = "All $totalCount scheduled doses marked as taken!"
+            } else {
+                tvDateAdherenceStatus?.text = "⏰ $takenCount of $totalCount Taken"
+                tvDateAdherenceStatus?.setTextColor(android.graphics.Color.parseColor("#F59E0B"))
+                tvDateAdherenceStatus?.setBackgroundResource(R.drawable.bg_badge_amber)
+                tvDateAdherenceDesc?.text = "${totalCount - takenCount} dose(s) pending for this date"
             }
 
-            // Update target badge and guidance description based on category
-            when (filter) {
-                "Pressure" -> {
-                    tvTargetBadge?.text = "Target < 120/80 mmHg"
-                    tvTrendDesc?.text = "Systolic and diastolic pressures evaluated for chronic hypertension control."
-                }
-                "Sugar" -> {
-                    tvTargetBadge?.text = "Target: 4.0 - 10.0 mmol/L"
-                    tvTrendDesc?.text = "Blood glucose readings tracked for diabetes and glycaemic health."
-                }
-                else -> {
-                    tvTargetBadge?.text = "Target: Normal"
-                    tvTrendDesc?.text = "All physiological vital signs and symptoms recorded on-device and synchronized."
-                }
-            }
+            tvSubtitle?.text = "${dateDoses.size} prescription logs on $dateFormatted"
         }
 
-        // Check for critical readings to display the alert banner
-        val hasCritical = allReadings.take(5).any { item ->
-            if (item.type.contains("pressure", ignoreCase = true)) {
-                val sys = item.value.split("/").firstOrNull()?.trim()?.toIntOrNull() ?: 120
-                sys >= 140
-            } else if (item.type.contains("sugar", ignoreCase = true) || item.type.contains("glucose", ignoreCase = true)) {
-                val s = item.value.toDoubleOrNull() ?: 5.5
-                s >= 11.1 || s < 3.9
-            } else false
+        calendarView?.setOnDateChangeListener { _, year, month, dayOfMonth ->
+            selectedCalendar = java.util.Calendar.getInstance().apply {
+                set(java.util.Calendar.YEAR, year)
+                set(java.util.Calendar.MONTH, month)
+                set(java.util.Calendar.DAY_OF_MONTH, dayOfMonth)
+            }
+            updateCalendarDateDoses(selectedCalendar)
         }
-        bannerCritical?.visibility = if (hasCritical) View.VISIBLE else View.GONE
-        btnBannerFindClinic?.setOnClickListener { showScreen(4) }
-
-        tvSubtitle?.text = "${allReadings.size} entries recorded · syncs with all pages"
-        btnLogNew?.setOnClickListener { showScreen(1) }
-
-        chipAll?.setOnClickListener { applyFilter("All") }
-        chipSugar?.setOnClickListener { applyFilter("Sugar") }
-        chipPressure?.setOnClickListener { applyFilter("Pressure") }
-        chipSymptoms?.setOnClickListener { applyFilter("Symptoms") }
 
         scope.launch {
-            viewModel.healthReadings.collectLatest { list ->
-                fullHistoryAdapter.updateData(list)
-                applyFilter("All")
-            }
+            kotlinx.coroutines.flow.combine(
+                viewModel.doseLogs,
+                viewModel.medications
+            ) { _, _ ->
+                updateCalendarDateDoses(selectedCalendar)
+            }.collectLatest {}
         }
 
-        // Start with All logs
-        applyFilter("All")
+        updateCalendarDateDoses(selectedCalendar)
     }
 
     // Active Clinic View references

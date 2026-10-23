@@ -5,1120 +5,257 @@
     android:orientation="vertical"
     android:background="@color/dark_background">
 
+    <!-- Top Header -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="18dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="12dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <View
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:background="@drawable/bg_badge_green" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="Groq Llama 3.3 Intelligence"
+                    android:textColor="@color/teal_secondary"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.05" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="AI Medication Assistant"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/btn_clear_chat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🗑️ Clear"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary"
+            android:background="@drawable/bg_button_secondary"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+
+    <!-- Scrollable Chat View -->
     <ScrollView
         android:id="@+id/scroll_log_reading"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="16dp"
-            android:paddingBottom="32dp">
+            android:paddingHorizontal="18dp"
+            android:paddingBottom="16dp">
 
-            <!-- 1. Clinical Health Header -->
-            <LinearLayout
+            <!-- Quick Inquiry Suggestions Header -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ask Me Anything About Your Medications:"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_muted"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Horizontal Suggestion Chips -->
+            <HorizontalScrollView
                 android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/chip_inquiry_side_effects"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/bg_card_dark"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="8dp"
+                        android:text="💊 Side Effects of Metformin?"
+                        android:textColor="@color/teal_accent"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <TextView
+                        android:id="@+id/chip_inquiry_interactions"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/bg_card_dark"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="8dp"
+                        android:text="⚠️ Ibuprofen + Lisinopril?"
+                        android:textColor="@color/teal_accent"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <TextView
+                        android:id="@+id/chip_inquiry_missed_dose"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/bg_card_dark"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="8dp"
+                        android:text="⏰ What if I miss a dose?"
+                        android:textColor="@color/teal_accent"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <TextView
+                        android:id="@+id/chip_inquiry_foods"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:background="@drawable/bg_card_dark"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="8dp"
+                        android:text="🥗 Best foods for BP?"
+                        android:textColor="@color/teal_accent"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <TextView
+                        android:id="@+id/chip_inquiry_sleep"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_card_dark"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="8dp"
+                        android:text="😴 Sleep tips for heart health"
+                        android:textColor="@color/teal_accent"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:clickable="true"
+                        android:focusable="true" />
+                </LinearLayout>
+            </HorizontalScrollView>
+
+            <!-- Chat Messages Container -->
+            <LinearLayout
+                android:id="@+id/layout_chat_messages_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Replying Indicator -->
+            <LinearLayout
+                android:id="@+id/layout_groq_replying"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_card_elevated"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                android:visibility="gone"
+                android:layout_marginBottom="12dp">
+
+                <ProgressBar
+                    style="?android:attr/progressBarStyleSmall"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_marginEnd="8dp" />
 
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <View
-                            android:layout_width="10dp"
-                            android:layout_height="10dp"
-                            android:background="@drawable/bg_badge_green" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="6dp"
-                            android:text="Clinical Health Monitor"
-                            android:textColor="@color/teal_secondary"
-                            android:textSize="11sp"
-                            android:textStyle="bold"
-                            android:letterSpacing="0.05" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="Record Vitals &amp; Symptoms"
-                        android:textColor="@color/text_primary"
-                        android:textSize="22sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <!-- History Badge Pill -->
-                <LinearLayout
-                    android:id="@+id/btn_header_history"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:background="@drawable/bg_badge_teal"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="7dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="📈"
-                        android:textSize="13sp"
-                        android:layout_marginEnd="4dp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="History"
-                        android:textColor="@color/teal_primary"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- 2. Segmented Vitals Selector Tabs (3 Cards) -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:orientation="horizontal">
-
-                <!-- Tab 1: Blood Pressure -->
-                <LinearLayout
-                    android:id="@+id/tab_blood_pressure"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginEnd="4dp"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:paddingVertical="12dp"
-                    android:paddingHorizontal="6dp"
-                    android:background="@drawable/bg_tab_selected"
-                    android:clickable="true"
-                    android:focusable="true">
-
-                    <TextView
-                        android:id="@+id/tab_bp_icon"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="❤️"
-                        android:textSize="18sp" />
-
-                    <TextView
-                        android:id="@+id/tab_bp_title"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Blood Pressure"
-                        android:textColor="@color/white"
-                        android:textSize="11sp"
-                        android:textStyle="bold"
-                        android:singleLine="true" />
-                </LinearLayout>
-
-                <!-- Tab 2: Blood Sugar -->
-                <LinearLayout
-                    android:id="@+id/tab_blood_sugar"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginHorizontal="4dp"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:paddingVertical="12dp"
-                    android:paddingHorizontal="6dp"
-                    android:background="@drawable/bg_tab_unselected"
-                    android:clickable="true"
-                    android:focusable="true">
-
-                    <TextView
-                        android:id="@+id/tab_sugar_icon"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="💧"
-                        android:textSize="18sp" />
-
-                    <TextView
-                        android:id="@+id/tab_sugar_title"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Blood Glucose"
-                        android:textColor="@color/text_primary"
-                        android:textSize="11sp"
-                        android:textStyle="normal"
-                        android:singleLine="true" />
-                </LinearLayout>
-
-                <!-- Tab 3: Symptom -->
-                <LinearLayout
-                    android:id="@+id/tab_symptom"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="4dp"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:paddingVertical="12dp"
-                    android:paddingHorizontal="6dp"
-                    android:background="@drawable/bg_tab_unselected"
-                    android:clickable="true"
-                    android:focusable="true">
-
-                    <TextView
-                        android:id="@+id/tab_symptom_icon"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🧠"
-                        android:textSize="18sp" />
-
-                    <TextView
-                        android:id="@+id/tab_symptom_title"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Symptom Log"
-                        android:textColor="@color/text_primary"
-                        android:textSize="11sp"
-                        android:textStyle="normal"
-                        android:singleLine="true" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- 3. Main Clinical Measurement Entry Panel -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:orientation="vertical"
-                android:background="@drawable/bg_card_dark"
-                android:padding="18dp">
-
-                <!-- A. Blood Pressure Controls Container -->
-                <LinearLayout
-                    android:id="@+id/layout_bp_container"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="visible">
-
-                    <!-- Dual Dial (Systolic & Diastolic) -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
-
-                        <!-- Systolic Column -->
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="center_horizontal"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="SYSTOLIC"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="11sp"
-                                android:textStyle="bold"
-                                android:letterSpacing="0.08" />
-
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:id="@+id/btn_systolic_minus"
-                                    android:layout_width="38dp"
-                                    android:layout_height="38dp"
-                                    android:background="@drawable/bg_circle_button"
-                                    android:clickable="true"
-                                    android:focusable="true"
-                                    android:gravity="center"
-                                    android:text="−"
-                                    android:textColor="@color/teal_accent"
-                                    android:textSize="20sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:id="@+id/tv_systolic_value"
-                                    android:layout_width="64dp"
-                                    android:layout_height="wrap_content"
-                                    android:gravity="center"
-                                    android:text="120"
-                                    android:textColor="@color/text_primary"
-                                    android:textSize="28sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:id="@+id/btn_systolic_plus"
-                                    android:layout_width="38dp"
-                                    android:layout_height="38dp"
-                                    android:background="@drawable/bg_circle_button"
-                                    android:clickable="true"
-                                    android:focusable="true"
-                                    android:gravity="center"
-                                    android:text="+"
-                                    android:textColor="@color/teal_accent"
-                                    android:textSize="20sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text="mmHg"
-                                android:textColor="@color/text_muted"
-                                android:textSize="11sp" />
-                        </LinearLayout>
-
-                        <!-- Divider -->
-                        <View
-                            android:layout_width="1dp"
-                            android:layout_height="64dp"
-                            android:background="@color/dark_card_stroke" />
-
-                        <!-- Diastolic Column -->
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:gravity="center_horizontal"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="DIASTOLIC"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="11sp"
-                                android:textStyle="bold"
-                                android:letterSpacing="0.08" />
-
-                            <LinearLayout
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-
-                                <TextView
-                                    android:id="@+id/btn_diastolic_minus"
-                                    android:layout_width="38dp"
-                                    android:layout_height="38dp"
-                                    android:background="@drawable/bg_circle_button"
-                                    android:clickable="true"
-                                    android:focusable="true"
-                                    android:gravity="center"
-                                    android:text="−"
-                                    android:textColor="@color/teal_accent"
-                                    android:textSize="20sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:id="@+id/tv_diastolic_value"
-                                    android:layout_width="64dp"
-                                    android:layout_height="wrap_content"
-                                    android:gravity="center"
-                                    android:text="80"
-                                    android:textColor="@color/text_primary"
-                                    android:textSize="28sp"
-                                    android:textStyle="bold" />
-
-                                <TextView
-                                    android:id="@+id/btn_diastolic_plus"
-                                    android:layout_width="38dp"
-                                    android:layout_height="38dp"
-                                    android:background="@drawable/bg_circle_button"
-                                    android:clickable="true"
-                                    android:focusable="true"
-                                    android:gravity="center"
-                                    android:text="+"
-                                    android:textColor="@color/teal_accent"
-                                    android:textSize="20sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:text="mmHg"
-                                android:textColor="@color/text_muted"
-                                android:textSize="11sp" />
-                        </LinearLayout>
-                    </LinearLayout>
-
-                    <!-- Quick BP Presets Horizontal Row -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:text="Quick Presets"
-                        android:textColor="@color/text_muted"
-                        android:textSize="11sp" />
-
-                    <HorizontalScrollView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:scrollbars="none">
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:id="@+id/chip_bp_115_75"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginEnd="6dp"
-                                android:background="@drawable/bg_chip_unselected"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:paddingHorizontal="10dp"
-                                android:paddingVertical="6dp"
-                                android:text="115/75 (Optimal)"
-                                android:textColor="@color/text_primary"
-                                android:textSize="11sp" />
-
-                            <TextView
-                                android:id="@+id/chip_bp_120_80"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginEnd="6dp"
-                                android:background="@drawable/bg_chip_selected"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:paddingHorizontal="10dp"
-                                android:paddingVertical="6dp"
-                                android:text="120/80 (Normal)"
-                                android:textColor="@color/white"
-                                android:textSize="11sp" />
-
-                            <TextView
-                                android:id="@+id/chip_bp_130_85"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginEnd="6dp"
-                                android:background="@drawable/bg_chip_unselected"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:paddingHorizontal="10dp"
-                                android:paddingVertical="6dp"
-                                android:text="130/85 (Pre-HTN)"
-                                android:textColor="@color/text_primary"
-                                android:textSize="11sp" />
-
-                            <TextView
-                                android:id="@+id/chip_bp_142_92"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginEnd="6dp"
-                                android:background="@drawable/bg_chip_unselected"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:paddingHorizontal="10dp"
-                                android:paddingVertical="6dp"
-                                android:text="142/92 (Stage 1)"
-                                android:textColor="@color/text_primary"
-                                android:textSize="11sp" />
-
-                            <TextView
-                                android:id="@+id/chip_bp_160_100"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:background="@drawable/bg_chip_unselected"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:paddingHorizontal="10dp"
-                                android:paddingVertical="6dp"
-                                android:text="160/100 (Stage 2)"
-                                android:textColor="@color/text_primary"
-                                android:textSize="11sp" />
-                        </LinearLayout>
-                    </HorizontalScrollView>
-                </LinearLayout>
-
-                <!-- B. Blood Sugar Controls Container -->
-                <LinearLayout
-                    android:id="@+id/layout_sugar_container"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="gone">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="FASTING / RANDOM GLUCOSE"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="11sp"
-                        android:textStyle="bold"
-                        android:letterSpacing="0.08" />
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_marginTop="8dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/btn_glucose_minus"
-                            android:layout_width="44dp"
-                            android:layout_height="44dp"
-                            android:background="@drawable/bg_circle_button"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:gravity="center"
-                            android:text="−"
-                            android:textColor="@color/teal_accent"
-                            android:textSize="22sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/tv_glucose_value"
-                            android:layout_width="100dp"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:text="5.4"
-                            android:textColor="@color/text_primary"
-                            android:textSize="32sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/btn_glucose_plus"
-                            android:layout_width="44dp"
-                            android:layout_height="44dp"
-                            android:background="@drawable/bg_circle_button"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:gravity="center"
-                            android:text="+"
-                            android:textColor="@color/teal_accent"
-                            android:textSize="22sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_marginTop="4dp"
-                        android:text="mmol/L"
-                        android:textColor="@color/text_muted"
-                        android:textSize="12sp" />
-
-                    <!-- Quick Glucose Presets -->
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:text="Quick Presets"
-                        android:textColor="@color/text_muted"
-                        android:textSize="11sp" />
-
-                    <HorizontalScrollView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="6dp"
-                        android:scrollbars="none">
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:id="@+id/chip_glucose_42"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginEnd="6dp"
-                                android:background="@drawable/bg_chip_unselected"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:paddingHorizontal="10dp"
-                                android:paddingVertical="6dp"
-                                android:text="4.2 (Low-Norm)"
-                                android:textColor="@color/text_primary"
-                                android:textSize="11sp" />
-
-                            <TextView
-                                android:id="@+id/chip_glucose_54"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginEnd="6dp"
-                                android:background="@drawable/bg_chip_selected"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:paddingHorizontal="10dp"
-                                android:paddingVertical="6dp"
-                                android:text="5.4 (Optimal)"
-                                android:textColor="@color/white"
-                                android:textSize="11sp" />
-
-                            <TextView
-                                android:id="@+id/chip_glucose_68"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginEnd="6dp"
-                                android:background="@drawable/bg_chip_unselected"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:paddingHorizontal="10dp"
-                                android:paddingVertical="6dp"
-                                android:text="6.8 (Normal)"
-                                android:textColor="@color/text_primary"
-                                android:textSize="11sp" />
-
-                            <TextView
-                                android:id="@+id/chip_glucose_85"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginEnd="6dp"
-                                android:background="@drawable/bg_chip_unselected"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:paddingHorizontal="10dp"
-                                android:paddingVertical="6dp"
-                                android:text="8.5 (Elevated)"
-                                android:textColor="@color/text_primary"
-                                android:textSize="11sp" />
-
-                            <TextView
-                                android:id="@+id/chip_glucose_115"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:background="@drawable/bg_chip_unselected"
-                                android:clickable="true"
-                                android:focusable="true"
-                                android:paddingHorizontal="10dp"
-                                android:paddingVertical="6dp"
-                                android:text="11.5 (High)"
-                                android:textColor="@color/text_primary"
-                                android:textSize="11sp" />
-                        </LinearLayout>
-                    </HorizontalScrollView>
-                </LinearLayout>
-
-                <!-- C. Symptom Input Container -->
-                <LinearLayout
-                    android:id="@+id/layout_symptom_container"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:visibility="gone">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="DESCRIBE HOW YOU FEEL"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="11sp"
-                        android:textStyle="bold"
-                        android:letterSpacing="0.08" />
-
-                    <EditText
-                        android:id="@+id/et_symptom_input"
-                        android:layout_width="match_parent"
-                        android:layout_height="90dp"
-                        android:layout_marginTop="8dp"
-                        android:background="@drawable/bg_edit_text"
-                        android:gravity="top|start"
-                        android:hint="e.g. Mild headache after working in the sun, feeling thirsty..."
-                        android:padding="12dp"
-                        android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_muted"
-                        android:textSize="13sp" />
-                </LinearLayout>
-
-                <!-- Save Action Button -->
-                <Button
-                    android:id="@+id/btn_save_to_health_log"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="18dp"
-                    android:background="@drawable/bg_button_teal"
-                    android:text="✓ Save Reading to Health Log"
-                    android:textColor="@color/white"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-
-                <!-- Save Confirmation Banner -->
-                <LinearLayout
-                    android:id="@+id/layout_saved_confirmation"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:background="@drawable/bg_confirmation_banner"
-                    android:orientation="vertical"
-                    android:padding="14dp"
-                    android:visibility="gone">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="✓ "
-                            android:textColor="@color/health_green"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Reading Saved Successfully!"
-                            android:textColor="@color/health_green"
-                            android:textSize="13sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/btn_dismiss_confirmation"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:text="✕"
-                            android:textColor="@color/text_muted"
-                            android:textSize="14sp" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/tv_saved_summary"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Blood Pressure: 120/80 mmHg recorded"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:orientation="horizontal">
-
-                        <Button
-                            android:id="@+id/btn_view_in_health_log"
-                            android:layout_width="0dp"
-                            android:layout_height="36dp"
-                            android:layout_marginEnd="6dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_button_secondary"
-                            android:text="View in Health Log"
-                            android:textColor="@color/teal_accent"
-                            android:textSize="11sp" />
-
-                        <Button
-                            android:id="@+id/btn_log_another"
-                            android:layout_width="0dp"
-                            android:layout_height="36dp"
-                            android:layout_marginStart="6dp"
-                            android:layout_weight="1"
-                            android:background="@drawable/bg_button_secondary"
-                            android:text="Log Another"
-                            android:textColor="@color/text_primary"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <!-- 4. Dynamic Clinical Gauge & Severity Card -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_card_dark"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/tv_gauge_badge_icon"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="6dp"
-                        android:text="●"
-                        android:textColor="@color/health_green"
-                        android:textSize="14sp" />
-
-                    <TextView
-                        android:id="@+id/tv_gauge_classification"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Normal Blood Pressure"
-                        android:textColor="@color/text_primary"
-                        android:textSize="15sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tv_gauge_severity_tag"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_badge_green"
-                        android:paddingHorizontal="8dp"
-                        android:paddingVertical="3dp"
-                        android:text="Optimal"
-                        android:textColor="@color/health_green"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <!-- Multi-Color Gradient Gauge Bar -->
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="8dp"
-                    android:layout_marginTop="14dp"
-                    android:background="@drawable/bg_gauge_gradient" />
-
-                <!-- Range Scale Markers -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:orientation="horizontal"
-                    android:weightSum="4">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Optimal"
-                        android:textColor="@color/text_muted"
-                        android:textSize="10sp" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="Normal"
-                        android:textColor="@color/text_muted"
-                        android:textSize="10sp" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="Stage 1"
-                        android:textColor="@color/text_muted"
-                        android:textSize="10sp" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:gravity="end"
-                        android:text="Crisis"
-                        android:textColor="@color/text_muted"
-                        android:textSize="10sp" />
-                </LinearLayout>
-
-                <!-- Feedback Message -->
                 <TextView
-                    android:id="@+id/tv_gauge_feedback_message"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:background="@drawable/bg_card_elevated"
-                    android:padding="12dp"
-                    android:text="Reading is within healthy cardiovascular parameters. Continue maintaining hydration and regular routine."
-                    android:textColor="@color/text_secondary"
-                    android:textSize="12sp" />
-
-                <!-- Urgent Red Flag Warning Card -->
-                <LinearLayout
-                    android:id="@+id/layout_red_flag_warning"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:background="@drawable/bg_badge_red"
-                    android:orientation="horizontal"
-                    android:padding="12dp"
-                    android:visibility="gone">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:text="🚨"
-                        android:textSize="18sp" />
-
-                    <TextView
-                        android:id="@+id/tv_red_flag_warning"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="High reading accompanied by severe symptoms requires urgent medical evaluation."
-                        android:textColor="@color/health_red"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- 6. Groq AI Clinical Chatbot Card -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_card_dark"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="6dp"
-                        android:text="✨"
-                        android:textSize="16sp" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Groq AI Health Assistant"
-                        android:textColor="@color/text_primary"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/btn_clear_chat"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:text="Clear"
-                        android:textColor="@color/text_muted"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <!-- Suggested Inquiry Chips Scroll -->
-                <HorizontalScrollView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="10dp"
-                    android:scrollbars="none">
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/chip_inquiry_foods"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="6dp"
-                            android:background="@drawable/bg_badge_teal"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:paddingHorizontal="10dp"
-                            android:paddingVertical="6dp"
-                            android:text="🥗 Heart foods"
-                            android:textColor="@color/teal_accent"
-                            android:textSize="11sp" />
-
-                        <TextView
-                            android:id="@+id/chip_inquiry_hydration"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="6dp"
-                            android:background="@drawable/bg_badge_teal"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:paddingHorizontal="10dp"
-                            android:paddingVertical="6dp"
-                            android:text="💧 Daily water target"
-                            android:textColor="@color/teal_accent"
-                            android:textSize="11sp" />
-
-                        <TextView
-                            android:id="@+id/chip_inquiry_sleep"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginEnd="6dp"
-                            android:background="@drawable/bg_badge_teal"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:paddingHorizontal="10dp"
-                            android:paddingVertical="6dp"
-                            android:text="😴 Sleep tips"
-                            android:textColor="@color/teal_accent"
-                            android:textSize="11sp" />
-
-                        <TextView
-                            android:id="@+id/chip_inquiry_bp"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/bg_badge_teal"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:paddingHorizontal="10dp"
-                            android:paddingVertical="6dp"
-                            android:text="❤️ Safe BP ranges"
-                            android:textColor="@color/teal_accent"
-                            android:textSize="11sp" />
-                    </LinearLayout>
-                </HorizontalScrollView>
-
-                <!-- Chat Messages Transcript Container -->
-                <LinearLayout
-                    android:id="@+id/layout_chat_messages_container"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:orientation="vertical" />
-
-                <!-- Typing / Generating Indicator -->
-                <LinearLayout
-                    android:id="@+id/layout_groq_replying"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:visibility="gone">
-
-                    <ProgressBar
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:indeterminateTint="@color/teal_accent" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:text="Groq AI is analyzing your vitals..."
-                        android:textColor="@color/text_muted"
-                        android:textSize="11sp" />
-                </LinearLayout>
-
-                <!-- Chat Input Row -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <EditText
-                        android:id="@+id/et_groq_chat_input"
-                        android:layout_width="0dp"
-                        android:layout_height="44dp"
-                        android:layout_marginEnd="8dp"
-                        android:layout_weight="1"
-                        android:background="@drawable/bg_edit_text"
-                        android:hint="Ask health questions..."
-                        android:paddingHorizontal="12dp"
-                        android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_muted"
-                        android:textSize="13sp" />
-
-                    <TextView
-                        android:id="@+id/btn_send_groq_chat"
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
-                        android:background="@drawable/bg_circle_button"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:gravity="center"
-                        android:text="➔"
-                        android:textColor="@color/teal_accent"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <!-- 7. Quick Action Navigation Row -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:orientation="horizontal">
-
-                <Button
-                    android:id="@+id/btn_share_vitals_row"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_marginEnd="4dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_button_secondary"
-                    android:text="📤 Share"
-                    android:textColor="@color/text_primary"
-                    android:textSize="11sp" />
-
-                <Button
-                    android:id="@+id/btn_nav_meds_row"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_marginHorizontal="4dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_button_secondary"
-                    android:text="💊 Meds"
-                    android:textColor="@color/text_primary"
-                    android:textSize="11sp" />
-
-                <Button
-                    android:id="@+id/btn_nav_dashboard_row"
-                    android:layout_width="0dp"
-                    android:layout_height="44dp"
-                    android:layout_marginStart="4dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/bg_button_secondary"
-                    android:text="⊞ Home"
-                    android:textColor="@color/text_primary"
-                    android:textSize="11sp" />
+                    android:text="Groq AI is analyzing your question..."
+                    android:textColor="@color/teal_accent"
+                    android:textSize="12sp" />
             </LinearLayout>
 
         </LinearLayout>
     </ScrollView>
+
+    <!-- Bottom Fixed Input Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@color/dark_surface"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="10dp">
+
+        <EditText
+            android:id="@+id/et_groq_chat_input"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:hint="Ask about drugs, dosage, side effects..."
+            android:textColorHint="@color/text_muted"
+            android:textColor="@color/text_primary"
+            android:textSize="13sp"
+            android:paddingHorizontal="14dp"
+            android:singleLine="true"
+            android:background="@drawable/bg_edit_text" />
+
+        <TextView
+            android:id="@+id/btn_send_groq_chat"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_button_teal"
+            android:gravity="center"
+            android:paddingHorizontal="16dp"
+            android:text="Send ➢"
+            android:textColor="@color/white"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+
 </LinearLayout>

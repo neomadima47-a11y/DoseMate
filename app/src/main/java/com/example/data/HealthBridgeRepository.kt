@@ -289,21 +289,35 @@ class HealthBridgeRepository(
             isPendingSync = true
         )
         val medId = medicationDao.insertMedication(medication)
-        
-        val doseLog = DoseLogEntity(
-            medicationId = medId,
-            medicationName = "$name $dosage",
-            scheduledTime = reminderTimes.split(",").firstOrNull()?.trim() ?: "8:00 AM",
-            status = "Pending",
-            date = "Today",
-            isPendingSync = true
-        )
-        medicationDao.insertDoseLogs(listOf(doseLog))
+
+        // Split reminder times and create a DoseLogEntity for EACH scheduled time
+        val times = reminderTimes.split(",")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .ifEmpty { listOf("08:00 AM") }
+
+        val displayName = if (dosage.isNotBlank() && dosage != "1 dose" && dosage != "Standard dose") {
+            "$name ($dosage)"
+        } else {
+            name
+        }
+
+        val doseLogs = times.map { timeStr ->
+            DoseLogEntity(
+                medicationId = medId,
+                medicationName = displayName,
+                scheduledTime = timeStr,
+                status = "Pending",
+                date = "Today",
+                isPendingSync = true
+            )
+        }
+        medicationDao.insertDoseLogs(doseLogs)
 
         try {
             val user = userDao.getUserSession().first()
             val userEmail = (user?.email ?: "anonymous").replace(".", "_")
-            
+
             FirestoreClient.getMedicationsCollection()
                 .document("${userEmail}_med_${medication.createdTimestamp}")
                 .set(medication.copy(id = medId))
