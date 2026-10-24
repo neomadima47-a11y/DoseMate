@@ -1,15 +1,44 @@
 package com.example.ui
 
 import com.example.data.DoseLogEntity
+import com.example.data.MedicationEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class MedicationsPageRequirementsTest {
+
+    @Test
+    fun testAddMedicationEntityCreation() {
+        val med = MedicationEntity(
+            id = 1001L,
+            name = "Panado",
+            dosage = "500mg",
+            frequency = "Twice daily",
+            reminderTimes = "08:00 AM, 08:00 PM",
+            status = "Active"
+        )
+
+        assertEquals("Panado", med.name)
+        assertEquals("500mg", med.dosage)
+        assertEquals("Twice daily", med.frequency)
+        assertEquals("Active", med.status)
+        assertEquals("08:00 AM, 08:00 PM", med.reminderTimes)
+    }
+
+    @Test
+    fun testMultipleMedicationsIndependentAlarmRequestCodes() {
+        val med1Id = 101L
+        val med2Id = 102L
+        val scheduledTime = "08:00 AM"
+
+        val code1 = (med1Id * 1000 + scheduledTime.hashCode() % 1000).toInt().coerceAtLeast(1)
+        val code2 = (med2Id * 1000 + scheduledTime.hashCode() % 1000).toInt().coerceAtLeast(1)
+
+        assertNotEquals(code1, code2)
+    }
 
     @Test
     fun testAddMedicationGeneratesDoseLogs() {
