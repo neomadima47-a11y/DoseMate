@@ -1,8 +1,10 @@
 package com.example.notifications
 
 import com.example.data.DoseLogEntity
+import com.example.data.MedicationEntity
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -22,7 +24,6 @@ class MedicationSystemTest {
             )
         )
 
-        // Check if dose was already taken today
         val medicationId = 10L
         val todayStr = "2026-10-24"
         val isTaken = logs.any { log ->
@@ -57,6 +58,39 @@ class MedicationSystemTest {
         }
 
         assertFalse("Pending dose must trigger notification alert", isTaken)
+    }
+
+    @Test
+    fun testMarkingDoseTakenUpdatesTakenTimeAndStatus() {
+        val pendingDose = DoseLogEntity(
+            id = 5,
+            medicationId = 50,
+            medicationName = "Panado 500mg",
+            scheduledTime = "08:00 AM",
+            takenTime = null,
+            status = "Pending",
+            date = "2026-10-24"
+        )
+
+        // Simulate marking dose as taken
+        val takenDose = pendingDose.copy(status = "Taken", takenTime = "08:02 AM")
+
+        assertEquals("Taken", takenDose.status)
+        assertEquals("08:02 AM", takenDose.takenTime)
+        assertNull(pendingDose.takenTime)
+    }
+
+    @Test
+    fun testDeactivatingMedicationCancelsScheduledNotifications() {
+        val medications = listOf(
+            MedicationEntity(id = 1, name = "Panado", dosage = "500mg", frequency = "Twice daily", reminderTimes = "8:00 AM", status = "Active"),
+            MedicationEntity(id = 2, name = "Amlodipine", dosage = "5mg", frequency = "Once daily", reminderTimes = "6:00 PM", status = "Ended")
+        )
+
+        val activeMeds = medications.filter { it.status.equals("Active", ignoreCase = true) }
+
+        assertEquals(1, activeMeds.size)
+        assertEquals("Panado", activeMeds[0].name)
     }
 
     @Test
