@@ -127,13 +127,13 @@ fun LogReadingScreen(
     var symptomTextValue by remember { mutableStateOf("") }
     var selectedSymptoms by remember { mutableStateOf(setOf<String>()) }
 
-    // Groq Conversational AI Chatbot State (Powered by Groq Llama-3.3-70B)
+    // Google Gemini Conversational AI Chatbot State
     var chatMessages by remember {
         mutableStateOf(
             listOf(
                 ChatBotMessage(
                     isUser = false,
-                    text = "Hello! I'm your Groq Clinical AI Assistant (powered by Llama 3.3 70B). I'm here to chat about anything—whether you want to discuss your readings on screen, or ask general questions about nutrition, sleep, exercise, medications, mental wellness, or any other health topic. How can I help you today?"
+                    text = "Hello! I'm your Google Gemini Medical AI Assistant. Ask me any questions about your medications, dosages, side effects, drug interactions, nutrition, sleep, exercise, or health!"
                 )
             )
         )
@@ -202,7 +202,7 @@ fun LogReadingScreen(
         }
     }
 
-    // Function to send a message to the Groq conversational chatbot
+    // Function to send a message to the Google Gemini conversational chatbot
     fun sendMessageToChatbot(promptText: String? = null) {
         val question = (promptText ?: userChatInput).trim()
         if (question.isBlank() || isGroqReplying) return
@@ -223,7 +223,7 @@ fun LogReadingScreen(
                 )
             }
 
-            val result = GeminiHealthClient.chatWithGroq(
+            val result = GeminiHealthClient.chatWithGemini(
                 history = historyPayload,
                 currentVitalsContext = vitalsContext,
                 language = language
@@ -235,7 +235,7 @@ fun LogReadingScreen(
             }.onFailure { err ->
                 chatMessages = chatMessages + ChatBotMessage(
                     isUser = false,
-                    text = "Could not reach Groq server: ${err.message ?: "Network timeout"}. Please verify connection and try again."
+                    text = "Could not reach Google Gemini server: ${err.message ?: "Network timeout"}. Please verify connection and try again."
                 )
             }
         }
@@ -1093,13 +1093,13 @@ fun LogReadingScreen(
 
                         Column {
                             Text(
-                                text = "Groq Clinical AI Assistant",
+                                text = "Google Gemini Clinical AI Assistant",
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "Llama 3.3 70B • Conversational Medical & Health AI",
+                                text = "Google Gemini AI • Conversational Medical & Health Assistant",
                                 fontSize = 11.sp,
                                 color = TealSecondary,
                                 fontWeight = FontWeight.Medium
@@ -1113,7 +1113,7 @@ fun LogReadingScreen(
                             chatMessages = listOf(
                                 ChatBotMessage(
                                     isUser = false,
-                                    text = "Hello! I'm your Groq Clinical AI Assistant (powered by Llama 3.3 70B). Ask me any questions about health, nutrition, sleep, medications, fitness, or your readings on screen!"
+                                    text = "Hello! I'm your Google Gemini Medical AI Assistant. Ask me any questions about health, nutrition, sleep, medications, fitness, or your readings on screen!"
                                 )
                             )
                         },
@@ -1262,7 +1262,7 @@ fun LogReadingScreen(
                                                 )
                                                 Spacer(modifier = Modifier.width(4.dp))
                                                 Text(
-                                                    text = "Groq AI Medical Assistant",
+                                                    text = "Google Gemini Medical AI Assistant",
                                                     fontSize = 10.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     color = TealPrimary
@@ -1287,7 +1287,7 @@ fun LogReadingScreen(
                             }
                         }
 
-                        // Groq Replying Indicator
+                        // Gemini Replying Indicator
                         if (isGroqReplying) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -1304,7 +1304,7 @@ fun LogReadingScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = "Groq Llama 3.3 is typing medical guidance...",
+                                    text = "Google Gemini AI is typing medical guidance...",
                                     fontSize = 11.sp,
                                     color = TealSecondary,
                                     fontWeight = FontWeight.Medium

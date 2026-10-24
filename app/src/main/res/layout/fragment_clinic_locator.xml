@@ -5,14 +5,15 @@
     android:orientation="vertical"
     android:background="@color/dark_background">
 
-    <!-- Top Search & Custom Clinic Actions Bar -->
+    <!-- Top Search Bar Container -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingHorizontal="18dp"
-        android:paddingTop="14dp"
-        android:paddingBottom="8dp">
+        android:paddingHorizontal="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="10dp"
+        android:background="@color/dark_surface">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -25,7 +26,7 @@
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
-                android:hint="🔍 Search or type any clinic/hospital..."
+                android:hint="🔍 Search hospital, clinic, pharmacy..."
                 android:textColorHint="@color/text_muted"
                 android:textColor="@color/text_primary"
                 android:textSize="13sp"
@@ -34,290 +35,148 @@
                 android:imeOptions="actionSearch"
                 android:background="@drawable/bg_edit_text" />
 
+            <TextView
+                android:id="@+id/btn_voice_search_clinic"
+                android:layout_width="48dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="6dp"
+                android:background="@drawable/bg_button_secondary"
+                android:gravity="center"
+                android:text="🎙️"
+                android:textSize="18sp"
+                android:clickable="true"
+                android:focusable="true" />
+
             <Button
                 android:id="@+id/btn_search_online_clinic"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:layout_marginStart="8dp"
-                android:text="Find &amp; Route"
+                android:layout_marginStart="6dp"
+                android:text="Search ➢"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:textColor="@color/white"
                 android:background="@drawable/bg_button_teal"
-                android:paddingHorizontal="12dp" />
+                android:paddingHorizontal="14dp" />
         </LinearLayout>
 
-        <LinearLayout
+        <!-- Quick Medical Assistance Search Chips -->
+        <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="6dp">
+            android:scrollbars="none"
+            android:layout_marginTop="8dp">
 
-            <TextView
-                android:id="@+id/tv_search_status_hint"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="💡 Search any health center or add your own clinic"
-                android:textSize="11sp"
-                android:textColor="@color/text_muted" />
-
-            <Button
-                android:id="@+id/btn_add_custom_clinic"
+            <LinearLayout
                 android:layout_width="wrap_content"
-                android:layout_height="32dp"
-                android:text="➕ Add Clinic"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:textColor="@color/teal_accent"
-                android:background="@drawable/bg_badge_teal"
-                android:paddingHorizontal="10dp" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <ScrollView
-        android:id="@+id/scroll_clinic_locator"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="18dp"
-            android:paddingBottom="24dp">
-
-            <!-- In-App MapTiler Outdoor Map Container Card -->
-            <LinearLayout
-                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:background="@drawable/bg_card_dark"
-                android:padding="14dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="14dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:layout_marginBottom="10dp">
-
-                    <TextView
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:gravity="center"
-                        android:text="🗺️"
-                        android:textSize="18sp"
-                        android:background="@drawable/bg_circle_icon"
-                        android:layout_marginEnd="10dp" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="MapTiler Outdoor Map"
-                            android:textSize="15sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/text_primary" />
-
-                        <TextView
-                            android:id="@+id/tv_map_status_subtitle"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="In-app navigation &amp; route guidance active"
-                            android:textSize="11sp"
-                            android:textColor="@color/text_secondary" />
-                    </LinearLayout>
-
-                    <Button
-                        android:id="@+id/btn_map_center_user"
-                        android:layout_width="wrap_content"
-                        android:layout_height="32dp"
-                        android:background="@drawable/bg_badge_teal"
-                        android:text="📍 My Location"
-                        android:textSize="11sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/teal_primary"
-                        android:paddingHorizontal="10dp" />
-                </LinearLayout>
-
-                <!-- Embedded MapTiler WebView Map Frame -->
-                <FrameLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="250dp"
-                    android:background="@drawable/bg_card_elevated">
-
-                    <WebView
-                        android:id="@+id/webview_clinic_map"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
-
-                    <!-- Map Loading Placeholder Overlay -->
-                    <LinearLayout
-                        android:id="@+id/layout_map_loading"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent"
-                        android:gravity="center"
-                        android:orientation="vertical"
-                        android:background="#DD111818"
-                        android:visibility="gone">
-
-                        <ProgressBar
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:indeterminateTint="@color/teal_accent" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="8dp"
-                            android:text="Loading MapTiler Outdoor Tiles..."
-                            android:textSize="12sp"
-                            android:textColor="@color/text_secondary" />
-                    </LinearLayout>
-                </FrameLayout>
-
-                <!-- In-App Turn-By-Turn Direction Card -->
-                <LinearLayout
-                    android:id="@+id/layout_in_app_route_card"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:orientation="vertical"
-                    android:background="@drawable/bg_confirmation_banner"
-                    android:padding="12dp"
-                    android:visibility="gone">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="🧭 "
-                            android:textSize="16sp" />
-
-                        <TextView
-                            android:id="@+id/tv_route_clinic_name"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Sunnyside Community Clinic"
-                            android:textSize="14sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/teal_accent" />
-
-                        <TextView
-                            android:id="@+id/btn_clear_map_route"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="✕ Clear"
-                            android:textSize="12sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/text_muted"
-                            android:paddingHorizontal="6dp"
-                            android:clickable="true"
-                            android:focusable="true" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/tv_route_details"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="Distance: 1.2 km • In-App Route: ~4 mins drive / ~14 mins walk"
-                        android:textSize="12sp"
-                        android:textColor="@color/text_primary" />
-
-                    <TextView
-                        android:id="@+id/tv_route_address"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="45 Kotze St, Sunnyside, Pretoria"
-                        android:textSize="11sp"
-                        android:textColor="@color/text_secondary" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:orientation="horizontal"
-                        android:gravity="center_vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="● In-App GPS Active"
-                            android:textSize="11sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/health_green" />
-
-                        <View
-                            android:layout_width="0dp"
-                            android:layout_height="1dp"
-                            android:layout_weight="1" />
-
-                        <Button
-                            android:id="@+id/btn_route_call_direct"
-                            android:layout_width="wrap_content"
-                            android:layout_height="32dp"
-                            android:background="@drawable/bg_button_teal"
-                            android:text="📞 Call Clinic"
-                            android:textSize="11sp"
-                            android:textStyle="bold"
-                            android:textColor="@color/white"
-                            android:paddingHorizontal="12dp" />
-                    </LinearLayout>
-                </LinearLayout>
-
-            </LinearLayout>
-
-            <!-- Directory Section Header -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginBottom="10dp">
+                android:orientation="horizontal">
 
                 <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Verified Facilities Nearby"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/text_primary" />
-
-                <TextView
-                    android:id="@+id/tv_clinics_count_badge"
+                    android:id="@+id/chip_search_hospitals"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Sorted by Distance"
-                    android:textSize="11sp"
-                    android:textColor="@color/text_muted" />
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/bg_card_dark"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:text="🏥 Hospitals"
+                    android:textColor="@color/teal_accent"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/chip_search_clinics"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/bg_card_dark"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:text="🩺 Public Clinics"
+                    android:textColor="@color/teal_accent"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/chip_search_private_hospitals"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/bg_card_dark"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:text="🏥 Private Hospitals"
+                    android:textColor="@color/teal_accent"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/chip_search_pharmacies"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/bg_card_dark"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:text="💊 Pharmacies"
+                    android:textColor="@color/teal_accent"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/chip_search_emergency"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_card_dark"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp"
+                    android:text="🚨 Emergency Care"
+                    android:textColor="@color/teal_accent"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:focusable="true" />
             </LinearLayout>
+        </HorizontalScrollView>
+    </LinearLayout>
 
-            <!-- Clinic Cards List -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rv_clinics_list"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false" />
+    <!-- Google Map Viewport Container -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-        </LinearLayout>
-    </ScrollView>
+        <WebView
+            android:id="@+id/webview_clinic_map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+        <!-- Floating Recenter GPS Location Button -->
+        <TextView
+            android:id="@+id/btn_recenter_gps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="14dp"
+            android:background="@drawable/bg_card_elevated"
+            android:text="📍 My Location"
+            android:textColor="@color/teal_accent"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="8dp"
+            android:elevation="6dp"
+            android:clickable="true"
+            android:focusable="true" />
+    </FrameLayout>
+
 </LinearLayout>

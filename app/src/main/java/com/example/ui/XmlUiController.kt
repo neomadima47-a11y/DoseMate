@@ -1,9 +1,14 @@
 package com.example.ui
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.speech.RecognizerIntent
+import java.util.Locale
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,6 +19,8 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -93,10 +100,13 @@ class XmlUiController(
 
         scope.launch {
             viewModel.userSession.collectLatest { session ->
-                if (session == null || !session.isLoggedIn) {
-                    showScreen(-1) // Show Auth
-                } else if (activeNavIndex == -1) {
+                if (session != null && !session.isLoggedIn) {
+                    showScreen(-1) // Show Auth ONLY if explicitly logged out
+                } else if (session != null && session.isLoggedIn && activeNavIndex == -1) {
                     showScreen(0) // Show Dashboard once logged in
+                }
+                if (session != null) {
+                    applyThemeToXmlRoot(session.darkThemeEnabled)
                 }
             }
         }
@@ -201,6 +211,9 @@ class XmlUiController(
             4 -> setupClinicsView(view)
             5 -> setupSettingsView(view)
         }
+
+        val isDark = viewModel.userSession.value?.darkThemeEnabled ?: true
+        applyThemeToXmlRoot(isDark)
     }
 
     // --- 1. Authentication View Setup ---
@@ -541,9 +554,9 @@ class XmlUiController(
             layoutChatContainer?.addView(msgView)
         }
 
-        // Initial welcoming greeting from Groq Llama 3.3 AI Assistant
+        // Initial welcoming greeting from Google Gemini AI Assistant
         if (layoutChatContainer?.childCount == 0) {
-            val initialGreeting = "Hello! I am your AI Medication & Health Assistant powered by Groq Llama 3.3. Ask me anything about your prescriptions, side effects, drug interactions, or wellness advice!"
+            val initialGreeting = "Hello! I am your AI Medication & Health Assistant powered by Google Gemini AI. Ask me anything about your prescriptions, side effects, drug interactions, or wellness advice!"
             addChatMessage(initialGreeting, isUser = false)
             chatHistory.add(GeminiHealthClient.ChatMessagePayload(role = "assistant", content = initialGreeting))
         }
@@ -622,27 +635,41 @@ class XmlUiController(
 
             val activeMeds = viewModel.medications.value.filter { it.status == "Active" }
 
-            val displayDoses = if (doseList.isNotEmpty()) {
-                doseList
-            } else {
-                activeMeds.flatMap { med ->
-                    val times = med.reminderTimes.split(",").map { it.trim() }.filter { it.isNotEmpty() }.ifEmpty { listOf("08:00 AM") }
-                    times.map { timeStr ->
-                        DoseLogEntity(
-                            medicationId = med.id,
-                            medicationName = if (med.dosage.isNotBlank() && med.dosage != "1 dose" && med.dosage != "Standard dose") "${med.name} (${med.dosage})" else med.name,
-                            scheduledTime = timeStr,
-                            status = "Pending",
-                            date = "Today"
+            val displayDoses = mutableListOf<DoseLogEntity>()
+
+            for (med in activeMeds) {
+                val times = med.reminderTimes.split(",").map { it.trim() }.filter { it.isNotEmpty() }.ifEmpty { listOf("08:00 AM") }
+                val displayName = if (med.dosage.isNotBlank() && med.dosage != "1 dose" && med.dosage != "Standard dose") "${med.name} (${med.dosage})" else med.name
+
+                for (timeStr in times) {
+                    val existingLog = doseList.find { log ->
+                        (log.medicationId == med.id || log.medicationName.contains(med.name, ignoreCase = true)) &&
+                                (log.scheduledTime.equals(timeStr, ignoreCase = true) || times.size == 1)
+                    }
+
+                    if (existingLog != null) {
+                        displayDoses.add(existingLog)
+                    } else {
+                        displayDoses.add(
+                            DoseLogEntity(
+                                medicationId = med.id,
+                                medicationName = displayName,
+                                scheduledTime = timeStr,
+                                status = "Pending",
+                                date = "Today"
+                            )
                         )
                     }
                 }
             }
 
+            val finalDosesList = (if (displayDoses.isNotEmpty()) displayDoses else doseList)
+                .distinctBy { "${it.medicationId}_${it.scheduledTime}" }
+
             val filtered = when (filter) {
-                "Due" -> displayDoses.filter { it.status != "Taken" }
-                "Completed" -> displayDoses.filter { it.status == "Taken" }
-                else -> displayDoses
+                "Due" -> finalDosesList.filter { it.status != "Taken" }
+                "Completed" -> finalDosesList.filter { it.status == "Taken" }
+                else -> finalDosesList
             }
 
             medicationAdapter.updateData(filtered)
@@ -658,7 +685,7 @@ class XmlUiController(
                 tab.setTextColor(android.graphics.Color.parseColor(if (isSelected) "#FFFFFF" else "#9CA3AF"))
             }
 
-            tvScheduleCount?.text = "${filtered.size} doses shown"
+            tvScheduleCount?.text = "${filtered.size} prescriptions & doses shown"
         }
 
         rvList?.layoutManager = LinearLayoutManager(activity)
@@ -696,6 +723,8 @@ class XmlUiController(
     fun showAddMedicationDialog(prefilledName: String = "") {
         val dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_add_medication, null)
         val etName = dialogView.findViewById<EditText>(R.id.et_dialog_med_name)
+        val tvStartDateVal = dialogView.findViewById<TextView>(R.id.tv_dialog_start_date_val)
+        val btnPickStartDate = dialogView.findViewById<Button>(R.id.btn_dialog_pick_start_date)
         val spinnerFreq = dialogView.findViewById<android.widget.Spinner>(R.id.spinner_dialog_frequency)
 
         val row1 = dialogView.findViewById<View>(R.id.layout_time_row_1)
@@ -715,6 +744,29 @@ class XmlUiController(
 
         if (prefilledName.isNotBlank()) {
             etName?.setText(prefilledName)
+        }
+
+        val selectedStartCal = java.util.Calendar.getInstance()
+        val startDateDisplayFormat = java.text.SimpleDateFormat("EEEE, MMM d, yyyy", java.util.Locale.US)
+        val startDateIsoFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+
+        tvStartDateVal?.text = "Today (${startDateDisplayFormat.format(selectedStartCal.time)})"
+
+        btnPickStartDate?.setOnClickListener {
+            val yr = selectedStartCal.get(java.util.Calendar.YEAR)
+            val mo = selectedStartCal.get(java.util.Calendar.MONTH)
+            val dy = selectedStartCal.get(java.util.Calendar.DAY_OF_MONTH)
+
+            android.app.DatePickerDialog(activity, { _, selectedYear, selectedMonth, selectedDay ->
+                selectedStartCal.set(java.util.Calendar.YEAR, selectedYear)
+                selectedStartCal.set(java.util.Calendar.MONTH, selectedMonth)
+                selectedStartCal.set(java.util.Calendar.DAY_OF_MONTH, selectedDay)
+
+                val formattedDate = startDateDisplayFormat.format(selectedStartCal.time)
+                tvStartDateVal?.text = formattedDate
+            }, yr, mo, dy).apply {
+                datePicker.minDate = System.currentTimeMillis() - 1000
+            }.show()
         }
 
         // Frequency options
@@ -782,9 +834,10 @@ class XmlUiController(
 
                 val timesFormatted = timesList.joinToString(", ")
                 val defaultDosage = "1 dose"
+                val startDateIso = startDateIsoFormat.format(selectedStartCal.time)
 
-                viewModel.addMedication(name, defaultDosage, freqText, timesFormatted)
-                Toast.makeText(activity, "Scheduled $name ($freqText at $timesFormatted)", Toast.LENGTH_LONG).show()
+                viewModel.addMedication(name, defaultDosage, freqText, timesFormatted, startDateIso)
+                Toast.makeText(activity, "Scheduled $name ($freqText at $timesFormatted starting $startDateIso)", Toast.LENGTH_LONG).show()
             }
             .setNegativeButton("Cancel", null)
             .show()
@@ -811,6 +864,7 @@ class XmlUiController(
         rvLogs?.adapter = medicationAdapter
 
         val fullDateFormat = java.text.SimpleDateFormat("EEEE, MMMM d, yyyy", java.util.Locale.US)
+        val isoDateFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
         val monthYearFormat = java.text.SimpleDateFormat("MMMM yyyy", java.util.Locale.US)
 
         var displayCalendar = java.util.Calendar.getInstance().apply {
@@ -818,52 +872,93 @@ class XmlUiController(
         }
         var selectedCalendar = java.util.Calendar.getInstance()
 
+        fun isSameDay(cal1: java.util.Calendar, cal2: java.util.Calendar): Boolean {
+            return cal1.get(java.util.Calendar.YEAR) == cal2.get(java.util.Calendar.YEAR) &&
+                    cal1.get(java.util.Calendar.DAY_OF_YEAR) == cal2.get(java.util.Calendar.DAY_OF_YEAR)
+        }
+
+        fun getDosesForCalendarDate(targetCal: java.util.Calendar): List<DoseLogEntity> {
+            val targetIso = isoDateFormat.format(targetCal.time)
+            val targetFull = fullDateFormat.format(targetCal.time)
+
+            val nowCal = java.util.Calendar.getInstance()
+            val isToday = isSameDay(targetCal, nowCal)
+
+            val diffMs = nowCal.timeInMillis - targetCal.timeInMillis
+            val diffDays = (diffMs / (1000 * 60 * 60 * 24)).toInt()
+
+            val allDoses = viewModel.doseLogs.value
+            val activeMeds = viewModel.medications.value.filter { it.status == "Active" }
+
+            val matchedLogs = allDoses.filter { log ->
+                log.date == targetIso ||
+                log.date.equals(targetFull, ignoreCase = true) ||
+                (isToday && (log.date == "Today" || log.date == targetIso)) ||
+                (diffDays == 1 && (log.date == "Yesterday" || log.date == targetIso)) ||
+                (diffDays == 2 && (log.date == "2 days ago" || log.date == targetIso)) ||
+                (diffDays in 3..30 && log.date.contains("$diffDays days ago", ignoreCase = true))
+            }.distinctBy { "${it.medicationId}_${it.scheduledTime}" }
+
+            if (matchedLogs.isNotEmpty()) {
+                return matchedLogs
+            }
+
+            if (isToday && activeMeds.isNotEmpty()) {
+                return activeMeds.flatMap { med ->
+                    val times = med.reminderTimes.split(",").map { it.trim() }.filter { it.isNotEmpty() }.ifEmpty { listOf("08:00 AM") }
+                    times.map { timeStr ->
+                        DoseLogEntity(
+                            medicationId = med.id,
+                            medicationName = if (med.dosage.isNotBlank() && med.dosage != "1 dose") "${med.name} (${med.dosage})" else med.name,
+                            scheduledTime = timeStr,
+                            status = "Pending",
+                            date = "Today"
+                        )
+                    }
+                }.distinctBy { "${it.medicationId}_${it.scheduledTime}" }
+            }
+
+            return emptyList()
+        }
+
         fun updateSelectedDateDetails(cal: java.util.Calendar) {
             val dateFormatted = fullDateFormat.format(cal.time)
             tvSelectedDateLabel?.text = dateFormatted
 
-            val allDoses = viewModel.doseLogs.value
-            val isToday = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(cal.time) ==
-                    java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
-
-            val activeMeds = viewModel.medications.value.filter { it.status == "Active" }
-
-            val dateDoses = if (isToday) {
-                if (allDoses.isNotEmpty()) {
-                    allDoses
-                } else {
-                    activeMeds.flatMap { med ->
-                        val times = med.reminderTimes.split(",").map { it.trim() }.filter { it.isNotEmpty() }.ifEmpty { listOf("08:00 AM") }
-                        times.map { timeStr ->
-                            DoseLogEntity(
-                                medicationId = med.id,
-                                medicationName = if (med.dosage.isNotBlank() && med.dosage != "1 dose") "${med.name} (${med.dosage})" else med.name,
-                                scheduledTime = timeStr,
-                                status = "Pending",
-                                date = "Today"
-                            )
-                        }
-                    }
-                }
-            } else {
-                allDoses.filter { it.date == dateFormatted || it.date == "Today" }
-            }
-
+            val dateDoses = getDosesForCalendarDate(cal)
             medicationAdapter.updateData(dateDoses)
+
             layoutEmpty?.visibility = if (dateDoses.isEmpty()) View.VISIBLE else View.GONE
             rvLogs?.visibility = if (dateDoses.isEmpty()) View.GONE else View.VISIBLE
 
             val takenCount = dateDoses.count { it.status == "Taken" }
             val totalCount = dateDoses.size
-            val pct = if (totalCount > 0) (takenCount * 100) / totalCount else 100
+            val pct = if (totalCount > 0) (takenCount * 100) / totalCount else 0
 
-            tvAdherenceBadge?.text = "✓ $pct% Adherence"
+            val nowCal = java.util.Calendar.getInstance()
+            nowCal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+            nowCal.set(java.util.Calendar.MINUTE, 0)
+            nowCal.set(java.util.Calendar.SECOND, 0)
+            nowCal.set(java.util.Calendar.MILLISECOND, 0)
+
+            val checkCal = cal.clone() as java.util.Calendar
+            checkCal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+            checkCal.set(java.util.Calendar.MINUTE, 0)
+            checkCal.set(java.util.Calendar.SECOND, 0)
+            checkCal.set(java.util.Calendar.MILLISECOND, 0)
+
+            val isFuture = checkCal.after(nowCal)
 
             if (totalCount == 0) {
                 tvDateAdherenceStatus?.text = "No Prescriptions"
                 tvDateAdherenceStatus?.setTextColor(android.graphics.Color.parseColor("#9CA3AF"))
                 tvDateAdherenceStatus?.setBackgroundResource(R.drawable.bg_badge_teal)
-                tvDateAdherenceDesc?.text = "No doses were scheduled or logged for this date"
+                tvDateAdherenceDesc?.text = "No prescriptions scheduled for this date"
+            } else if (isFuture) {
+                tvDateAdherenceStatus?.text = "⏰ Scheduled ($totalCount Doses)"
+                tvDateAdherenceStatus?.setTextColor(android.graphics.Color.parseColor("#F59E0B"))
+                tvDateAdherenceStatus?.setBackgroundResource(R.drawable.bg_badge_amber)
+                tvDateAdherenceDesc?.text = "Future scheduled doses on $dateFormatted"
             } else if (pct == 100) {
                 tvDateAdherenceStatus?.text = "✓ 100% Taken"
                 tvDateAdherenceStatus?.setTextColor(android.graphics.Color.parseColor("#10B981"))
@@ -873,7 +968,7 @@ class XmlUiController(
                 tvDateAdherenceStatus?.text = "⏰ $takenCount of $totalCount Taken"
                 tvDateAdherenceStatus?.setTextColor(android.graphics.Color.parseColor("#F59E0B"))
                 tvDateAdherenceStatus?.setBackgroundResource(R.drawable.bg_badge_amber)
-                tvDateAdherenceDesc?.text = "${totalCount - takenCount} dose(s) pending for this date"
+                tvDateAdherenceDesc?.text = "${totalCount - takenCount} dose(s) not taken on $dateFormatted"
             }
 
             tvSubtitle?.text = "${dateDoses.size} prescription logs on $dateFormatted"
@@ -895,6 +990,7 @@ class XmlUiController(
                     com.example.ui.adapters.CalendarDayItem(
                         dayNumber = 0,
                         fullDateString = "",
+                        isoDateString = "",
                         calendar = null,
                         isCurrentMonth = false,
                         status = com.example.ui.adapters.DayAdherenceStatus.NO_DOSES,
@@ -903,11 +999,13 @@ class XmlUiController(
                 )
             }
 
-            val allDoses = viewModel.doseLogs.value
-            val activeMeds = viewModel.medications.value.filter { it.status == "Active" }
+            val selectedIso = isoDateFormat.format(selectedCalendar.time)
 
-            val todayFormatted = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
-            val selectedFormatted = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(selectedCalendar.time)
+            val nowCal = java.util.Calendar.getInstance()
+            nowCal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+            nowCal.set(java.util.Calendar.MINUTE, 0)
+            nowCal.set(java.util.Calendar.SECOND, 0)
+            nowCal.set(java.util.Calendar.MILLISECOND, 0)
 
             // Populate all days in current month
             for (day in 1..daysInMonth) {
@@ -915,46 +1013,34 @@ class XmlUiController(
                 dayCal.set(java.util.Calendar.DAY_OF_MONTH, day)
 
                 val dayDateFormatted = fullDateFormat.format(dayCal.time)
-                val dayIsoFormatted = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(dayCal.time)
+                val dayIsoFormatted = isoDateFormat.format(dayCal.time)
 
-                val isToday = dayIsoFormatted == todayFormatted
-                val isSelected = dayIsoFormatted == selectedFormatted
+                val isSelected = dayIsoFormatted == selectedIso
 
-                val dateDoses = if (isToday) {
-                    if (allDoses.isNotEmpty()) {
-                        allDoses
-                    } else {
-                        activeMeds.flatMap { med ->
-                            val times = med.reminderTimes.split(",").map { it.trim() }.filter { it.isNotEmpty() }.ifEmpty { listOf("08:00 AM") }
-                            times.map { timeStr ->
-                                DoseLogEntity(
-                                    medicationId = med.id,
-                                    medicationName = if (med.dosage.isNotBlank() && med.dosage != "1 dose") "${med.name} (${med.dosage})" else med.name,
-                                    scheduledTime = timeStr,
-                                    status = "Pending",
-                                    date = "Today"
-                                )
-                            }
-                        }
-                    }
-                } else {
-                    allDoses.filter { it.date == dayDateFormatted || it.date == "Today" }
-                }
-
+                val dateDoses = getDosesForCalendarDate(dayCal)
                 val takenCount = dateDoses.count { it.status == "Taken" }
                 val totalCount = dateDoses.size
 
+                val checkCal = dayCal.clone() as java.util.Calendar
+                checkCal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                checkCal.set(java.util.Calendar.MINUTE, 0)
+                checkCal.set(java.util.Calendar.SECOND, 0)
+                checkCal.set(java.util.Calendar.MILLISECOND, 0)
+
+                val isFuture = checkCal.after(nowCal)
+
                 val status = when {
                     totalCount == 0 -> com.example.ui.adapters.DayAdherenceStatus.NO_DOSES
-                    takenCount == totalCount -> com.example.ui.adapters.DayAdherenceStatus.ALL_TAKEN
-                    takenCount > 0 -> com.example.ui.adapters.DayAdherenceStatus.PARTIAL_PENDING
-                    else -> com.example.ui.adapters.DayAdherenceStatus.PARTIAL_PENDING
+                    isFuture -> com.example.ui.adapters.DayAdherenceStatus.UPCOMING_SCHEDULED
+                    takenCount > 0 && takenCount == totalCount -> com.example.ui.adapters.DayAdherenceStatus.ALL_TAKEN
+                    else -> com.example.ui.adapters.DayAdherenceStatus.NOT_TAKEN_DUE
                 }
 
                 dayItems.add(
                     com.example.ui.adapters.CalendarDayItem(
                         dayNumber = day,
                         fullDateString = dayDateFormatted,
+                        isoDateString = dayIsoFormatted,
                         calendar = dayCal,
                         isCurrentMonth = true,
                         status = status,
@@ -1151,131 +1237,206 @@ class XmlUiController(
             .show()
     }
 
-    // --- 6. Clinics View Setup ---
-    fun setupClinicsView(view: View) {
-        val etSearch = view.findViewById<EditText>(R.id.et_search_clinics)
-        val btnSearch = view.findViewById<Button>(R.id.btn_search_online_clinic)
-        val tvHint = view.findViewById<TextView>(R.id.tv_search_status_hint)
-        val btnAddCustom = view.findViewById<Button>(R.id.btn_add_custom_clinic)
-        val scrollClinic = view.findViewById<View>(R.id.scroll_clinic_locator)
-        val btnCenterUser = view.findViewById<Button>(R.id.btn_map_center_user)
-        val webView = view.findViewById<android.webkit.WebView>(R.id.webview_clinic_map)
-        val layoutLoading = view.findViewById<LinearLayout>(R.id.layout_map_loading)
+    private var gpsLocationCallback: com.google.android.gms.location.LocationCallback? = null
+    private var gpsFusedLocationClient: com.google.android.gms.location.FusedLocationProviderClient? = null
 
-        val routeCard = view.findViewById<LinearLayout>(R.id.layout_in_app_route_card)
-        val tvRouteName = view.findViewById<TextView>(R.id.tv_route_clinic_name)
-        val btnClearRoute = view.findViewById<TextView>(R.id.btn_clear_map_route)
-        val tvRouteDetails = view.findViewById<TextView>(R.id.tv_route_details)
-        val tvRouteAddress = view.findViewById<TextView>(R.id.tv_route_address)
-        val btnRouteCall = view.findViewById<Button>(R.id.btn_route_call_direct)
+    @SuppressLint("MissingPermission")
+    private fun startGpsTrackingForMap(webView: android.webkit.WebView) {
+        if (ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                activity,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+                102
+            )
+            return
+        }
 
-        val tvCount = view.findViewById<TextView>(R.id.tv_clinics_count_badge)
-        val rvClinics = view.findViewById<RecyclerView>(R.id.rv_clinics_list)
-
-        // Store active references for in-app routing
-        activeClinicWebView = webView
-        activeRouteCard = routeCard
-        activeTvRouteClinicName = tvRouteName
-        activeTvRouteDetails = tvRouteDetails
-        activeTvRouteAddress = tvRouteAddress
-        activeBtnRouteCall = btnRouteCall
-        activeClinicScrollView = scrollClinic
-
-        // Setup Adapter with In-App Route Click
-        val adapter = ClinicXmlAdapter(
-            onCallClick = { clinic ->
-                val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:${clinic.phone.ifBlank { "911" }}"))
-                activity.startActivity(intent)
-            },
-            onDirectionsClick = { clinic ->
-                routeToClinicInApp(clinic)
+        try {
+            if (gpsFusedLocationClient == null) {
+                gpsFusedLocationClient = com.google.android.gms.location.LocationServices.getFusedLocationProviderClient(activity)
             }
-        )
 
-        rvClinics?.layoutManager = LinearLayoutManager(activity)
-        rvClinics?.adapter = adapter
+            gpsLocationCallback?.let { gpsFusedLocationClient?.removeLocationUpdates(it) }
 
-        // Setup MapTiler WebView
-        if (webView != null) {
-            webView.settings.javaScriptEnabled = true
-            webView.settings.domStorageEnabled = true
+            val locationRequest = com.google.android.gms.location.LocationRequest.Builder(
+                com.google.android.gms.location.Priority.PRIORITY_HIGH_ACCURACY, 1500L
+            ).setMinUpdateIntervalMillis(1000L).build()
 
-            webView.addJavascriptInterface(object {
-                @android.webkit.JavascriptInterface
-                fun onMapReady() {
-                    activity.runOnUiThread {
-                        layoutLoading?.visibility = View.GONE
-                        sendClinicsToMap(webView, viewModel.clinics.value)
+            gpsLocationCallback = object : com.google.android.gms.location.LocationCallback() {
+                override fun onLocationResult(result: com.google.android.gms.location.LocationResult) {
+                    val location = result.lastLocation ?: return
+                    val lat = location.latitude
+                    val lng = location.longitude
+                    webView.post {
+                        webView.evaluateJavascript("updateUserLocation($lat, $lng)", null)
                     }
                 }
+            }
 
-                @android.webkit.JavascriptInterface
-                fun onClinicClicked(id: Long, name: String, lat: Double, lng: Double) {
-                    activity.runOnUiThread {
-                        val match = viewModel.clinics.value.firstOrNull { it.id == id }
-                        if (match != null) {
-                            routeToClinicInApp(match)
-                        }
-                    }
-                }
-
-                @android.webkit.JavascriptInterface
-                fun onClinicRouted(id: Long, name: String) {
-                    activity.runOnUiThread {
-                        val match = viewModel.clinics.value.firstOrNull { it.id == id }
-                        if (match != null) {
-                            routeToClinicInApp(match)
-                        }
-                    }
-                }
-            }, "AndroidBridge")
-
-            webView.loadUrl("file:///android_asset/maptiler_map.html")
+            gpsFusedLocationClient?.requestLocationUpdates(
+                locationRequest,
+                gpsLocationCallback!!,
+                android.os.Looper.getMainLooper()
+            )
+        } catch (e: Throwable) {
+            android.util.Log.e("GpsTracker", "Error starting GPS tracking", e)
         }
+    }
 
-        btnCenterUser?.setOnClickListener {
-            webView?.evaluateJavascript("centerUser()", null)
-        }
-
-        btnClearRoute?.setOnClickListener {
-            routeCard?.visibility = View.GONE
-            webView?.evaluateJavascript("clearRoute()", null)
-        }
-
-        btnSearch?.setOnClickListener {
-            etSearch?.let { performClinicSearch(it.text.toString(), tvHint) }
-        }
-
-        btnAddCustom?.setOnClickListener {
-            showAddCustomClinicDialog()
-        }
-
-        scope.launch {
-            viewModel.clinics.collectLatest { list ->
-                adapter.updateData(list)
-                tvCount?.text = "${list.size} Facilities Available"
-                if (webView != null) {
-                    sendClinicsToMap(webView, list)
-                }
+    fun handleActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == 202 && resultCode == Activity.RESULT_OK) {
+            val spokenText = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.firstOrNull()
+            if (!spokenText.isNullOrBlank()) {
+                val etSearch = currentScreenLayout?.findViewById<EditText>(R.id.et_search_clinics)
+                val btnSearch = currentScreenLayout?.findViewById<Button>(R.id.btn_search_online_clinic)
+                etSearch?.setText(spokenText)
+                btnSearch?.performClick()
             }
         }
     }
 
-    private fun sendClinicsToMap(webView: android.webkit.WebView, clinics: List<ClinicEntity>) {
-        val array = org.json.JSONArray()
-        clinics.forEach { c ->
-            val obj = org.json.JSONObject()
-            obj.put("id", c.id)
-            obj.put("name", c.name)
-            obj.put("address", c.address)
-            obj.put("distance", String.format(java.util.Locale.US, "%.1f", c.distanceKm))
-            obj.put("hours", c.openHours)
-            obj.put("lat", c.latitude ?: (-25.7479 + (c.distanceKm * 0.008)))
-            obj.put("lng", c.longitude ?: (28.2293 + (c.distanceKm * 0.008)))
-            array.put(obj)
+    // --- 6. Clinics View Setup ---
+    fun setupClinicsView(view: View) {
+        val etSearch = view.findViewById<EditText>(R.id.et_search_clinics)
+        val btnVoice = view.findViewById<TextView>(R.id.btn_voice_search_clinic)
+        val btnSearch = view.findViewById<Button>(R.id.btn_search_online_clinic)
+        val webView = view.findViewById<android.webkit.WebView>(R.id.webview_clinic_map)
+
+        val btnRecenterGps = view.findViewById<TextView>(R.id.btn_recenter_gps)
+
+        val chipHospitals = view.findViewById<TextView>(R.id.chip_search_hospitals)
+        val chipClinics = view.findViewById<TextView>(R.id.chip_search_clinics)
+        val chipPrivate = view.findViewById<TextView>(R.id.chip_search_private_hospitals)
+        val chipPharmacies = view.findViewById<TextView>(R.id.chip_search_pharmacies)
+        val chipEmergency = view.findViewById<TextView>(R.id.chip_search_emergency)
+
+        if (webView != null) {
+            webView.settings.javaScriptEnabled = true
+            webView.settings.domStorageEnabled = true
+            webView.settings.setGeolocationEnabled(true)
+            webView.webChromeClient = object : android.webkit.WebChromeClient() {
+                override fun onGeolocationPermissionsShowPrompt(
+                    origin: String?,
+                    callback: android.webkit.GeolocationPermissions.Callback?
+                ) {
+                    callback?.invoke(origin, true, false)
+                }
+            }
+            webView.loadUrl("file:///android_asset/google_map.html")
+            startGpsTrackingForMap(webView)
         }
-        val jsonStr = array.toString().replace("'", "\\'")
-        webView.evaluateJavascript("loadClinics('$jsonStr')", null)
+
+        btnVoice?.setOnClickListener {
+            try {
+                val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                    putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+                    putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak facility or clinic name...")
+                }
+                activity.startActivityForResult(intent, 202)
+            } catch (_: Exception) {
+                Toast.makeText(activity, "Voice search is not supported on this device", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        fun performSearch(query: String) {
+            val q = query.trim()
+            if (q.isBlank()) return
+
+            scope.launch(Dispatchers.IO) {
+                try {
+                    val encodedQuery = java.net.URLEncoder.encode(q, "UTF-8")
+                    val urlStr = "https://api.maptiler.com/geocoding/$encodedQuery.json?key=JhXKARTgXfWBUYsXkPWK&proximity=28.2293,-25.7479&country=za"
+                    val client = okhttp3.OkHttpClient.Builder()
+                        .connectTimeout(8, java.util.concurrent.TimeUnit.SECONDS)
+                        .readTimeout(8, java.util.concurrent.TimeUnit.SECONDS)
+                        .build()
+                    val request = okhttp3.Request.Builder().url(urlStr).build()
+                    val response = client.newCall(request).execute()
+                    val body = response.body?.string()
+
+                    if (response.isSuccessful && !body.isNullOrBlank()) {
+                        val json = org.json.JSONObject(body)
+                        val features = json.optJSONArray("features")
+                        if (features != null && features.length() > 0) {
+                            var bestFeature = features.getJSONObject(0)
+                            var bestDist = Double.MAX_VALUE
+
+                            // Find the closest facility relative to user location
+                            for (i in 0 until features.length()) {
+                                val feat = features.getJSONObject(i)
+                                val geom = feat.optJSONObject("geometry")
+                                val coords = geom?.optJSONArray("coordinates")
+                                if (coords != null) {
+                                    val lng = coords.optDouble(0)
+                                    val lat = coords.optDouble(1)
+                                    val dist = com.example.data.calculateDistanceKm(-25.7479, 28.2293, lat, lng)
+                                    if (dist < bestDist) {
+                                        bestDist = dist
+                                        bestFeature = feat
+                                    }
+                                }
+                            }
+
+                            val placeName = bestFeature.optString("place_name", q)
+                            val geom = bestFeature.optJSONObject("geometry")
+                            val coords = geom?.optJSONArray("coordinates")
+                            val lng = coords?.optDouble(0) ?: 28.2293
+                            val lat = coords?.optDouble(1) ?: -25.7479
+
+                            withContext(Dispatchers.Main) {
+                                val escapedName = placeName.replace("'", "\\'")
+                                etSearch?.setText(placeName)
+                                webView?.evaluateJavascript("searchLocation($lat, $lng, '$escapedName')", null)
+                                Toast.makeText(activity, "Closest Facility: $placeName", Toast.LENGTH_SHORT).show()
+                            }
+                            return@launch
+                        }
+                    }
+                } catch (_: Throwable) {}
+
+                withContext(Dispatchers.Main) {
+                    val escapedQuery = q.replace("'", "\\'")
+                    webView?.evaluateJavascript("searchLocation(-25.7479, 28.2293, '$escapedQuery')", null)
+                }
+            }
+        }
+
+        btnSearch?.setOnClickListener {
+            val q = etSearch?.text?.toString() ?: ""
+            performSearch(q)
+        }
+
+        chipHospitals?.setOnClickListener {
+            etSearch?.setText("Hospital")
+            performSearch("Hospital")
+        }
+
+        chipClinics?.setOnClickListener {
+            etSearch?.setText("Public Clinic")
+            performSearch("Public Clinic")
+        }
+
+        chipPrivate?.setOnClickListener {
+            etSearch?.setText("Private Hospital")
+            performSearch("Private Hospital")
+        }
+
+        chipPharmacies?.setOnClickListener {
+            etSearch?.setText("Pharmacy")
+            performSearch("Pharmacy")
+        }
+
+        chipEmergency?.setOnClickListener {
+            etSearch?.setText("Emergency Medical Care")
+            performSearch("Emergency Medical Care")
+        }
+
+        btnRecenterGps?.setOnClickListener {
+            webView?.evaluateJavascript("recenterUserLocation()", null)
+            Toast.makeText(activity, "Centered on live location", Toast.LENGTH_SHORT).show()
+        }
     }
 
     // --- 7. Settings View Setup ---
@@ -1287,7 +1448,6 @@ class XmlUiController(
         val spinnerLang = view.findViewById<android.widget.Spinner>(R.id.spinner_language)
         val tvActiveLang = view.findViewById<TextView>(R.id.tv_active_language)
 
-        val switchDarkMode = view.findViewById<android.widget.Switch>(R.id.switch_dark_mode)
         val switchReminders = view.findViewById<android.widget.Switch>(R.id.switch_reminders)
 
         val btnCallEmergency = view.findViewById<Button>(R.id.btn_call_emergency_contact)
@@ -1297,9 +1457,10 @@ class XmlUiController(
         // Observe user session
         scope.launch {
             viewModel.userSession.collectLatest { session ->
-                val fullName = session?.fullName ?: "Lerato Mokoena"
-                val email = session?.email ?: "lerato.mokoena@dosemate.app"
-                val lang = session?.preferredLanguage ?: "English"
+                if (session == null) return@collectLatest
+                val fullName = session.fullName
+                val email = session.email
+                val lang = session.preferredLanguage
 
                 tvName?.text = fullName
                 tvEmail?.text = email
@@ -1308,8 +1469,11 @@ class XmlUiController(
                 val initials = fullName.split(" ").mapNotNull { it.firstOrNull() }.take(2).joinToString("").uppercase()
                 tvAvatar?.text = initials.ifBlank { "LM" }
 
-                switchDarkMode?.isChecked = session?.darkThemeEnabled ?: true
-                switchReminders?.isChecked = session?.medicationRemindersEnabled ?: true
+                if (switchReminders?.isChecked != session.medicationRemindersEnabled) {
+                    switchReminders?.isChecked = session.medicationRemindersEnabled
+                }
+
+                applyThemeToXmlRoot(true)
             }
         }
 
@@ -1330,12 +1494,11 @@ class XmlUiController(
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
 
-        switchDarkMode?.setOnCheckedChangeListener { _, isChecked ->
-            viewModel.toggleDarkTheme(isChecked)
-        }
-
         switchReminders?.setOnCheckedChangeListener { _, isChecked ->
-            viewModel.toggleReminders(isChecked)
+            val currentReminders = viewModel.userSession.value?.medicationRemindersEnabled ?: true
+            if (isChecked != currentReminders) {
+                viewModel.toggleReminders(isChecked)
+            }
         }
 
         btnCallEmergency?.setOnClickListener {
@@ -1352,6 +1515,61 @@ class XmlUiController(
             viewModel.logout()
             showScreen(-1) // Show Auth Screen
             Toast.makeText(activity, "Signed out successfully", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun applyThemeToXmlRoot(isDark: Boolean = true) {
+        val rootBg = android.graphics.Color.parseColor("#111818")
+        val topBottomBg = android.graphics.Color.parseColor("#1A2322")
+        val textColor = android.graphics.Color.parseColor("#F3F4F6")
+        val textSecColor = android.graphics.Color.parseColor("#9CA3AF")
+        val cardBg = android.graphics.Color.parseColor("#1A2322")
+
+        rootContainer.setBackgroundColor(rootBg)
+        fragmentContainer?.setBackgroundColor(rootBg)
+        currentScreenLayout?.setBackgroundColor(rootBg)
+
+        val topBar = rootContainer.findViewById<View>(R.id.app_top_bar)
+        topBar?.setBackgroundColor(topBottomBg)
+
+        val tvTitle = rootContainer.findViewById<TextView>(R.id.tv_app_title)
+        tvTitle?.setTextColor(textColor)
+
+        bottomNavBar?.setBackgroundColor(topBottomBg)
+
+        currentScreenLayout?.let { root ->
+            updateViewColorsRecursively(root, isDark, rootBg, cardBg, textColor, textSecColor)
+        }
+    }
+
+    private fun updateViewColorsRecursively(
+        view: View,
+        isDark: Boolean,
+        bgCol: Int,
+        cardCol: Int,
+        textPrimaryCol: Int,
+        textSecCol: Int
+    ) {
+        if (view is ViewGroup) {
+            for (i in 0 until view.childCount) {
+                updateViewColorsRecursively(view.getChildAt(i), isDark, bgCol, cardCol, textPrimaryCol, textSecCol)
+            }
+        }
+
+        if (view is TextView) {
+            val currentHex = String.format("#%06X", (0xFFFFFF and view.currentTextColor))
+            if (currentHex.equals("#F3F4F6", ignoreCase = true) || currentHex.equals("#0F172A", ignoreCase = true) || currentHex.equals("#F9FAFB", ignoreCase = true) || currentHex.equals("#111827", ignoreCase = true)) {
+                view.setTextColor(textPrimaryCol)
+            } else if (currentHex.equals("#9CA3AF", ignoreCase = true) || currentHex.equals("#475569", ignoreCase = true) || currentHex.equals("#6B7280", ignoreCase = true)) {
+                view.setTextColor(textSecCol)
+            }
+        }
+
+        if (view is EditText) {
+            view.setTextColor(textPrimaryCol)
+            view.setHintTextColor(textSecCol)
+            val editBg = if (isDark) android.graphics.Color.parseColor("#24302E") else android.graphics.Color.parseColor("#F1F5F9")
+            view.setBackgroundColor(editBg)
         }
     }
 }

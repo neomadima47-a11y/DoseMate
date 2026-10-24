@@ -264,20 +264,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun addMedication(name: String, dosage: String, frequency: String, reminderTimes: String) {
+    fun addMedication(name: String, dosage: String, frequency: String, reminderTimes: String, startDateIso: String = "") {
         viewModelScope.launch {
-            repository.addMedication(name, dosage, frequency, reminderTimes)
+            repository.addMedication(name, dosage, frequency, reminderTimes, startDateIso)
         }
     }
 
     fun deleteMedication(id: Long) {
         viewModelScope.launch {
+            val med = medications.value.find { it.id == id }
+            if (med != null) {
+                MedicationNotificationScheduler.cancelMedicationAlerts(getApplication<Application>(), med)
+            }
             repository.deleteMedication(id)
         }
     }
 
     fun updateMedicationStatus(id: Long, status: String) {
         viewModelScope.launch {
+            val med = medications.value.find { it.id == id }
+            if (med != null && !status.equals("Active", ignoreCase = true)) {
+                MedicationNotificationScheduler.cancelMedicationAlerts(getApplication<Application>(), med)
+            }
             repository.updateMedicationStatus(id, status)
         }
     }

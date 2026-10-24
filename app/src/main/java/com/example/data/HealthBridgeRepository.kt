@@ -32,59 +32,8 @@ class HealthBridgeRepository(
             )
         }
 
-        // Initialize Default Medications
-        val currentMeds = medicationDao.getAllMedications().first()
-        if (currentMeds.isEmpty()) {
-            val metId = medicationDao.insertMedication(
-                MedicationEntity(
-                    name = "Metformin",
-                    dosage = "500mg",
-                    frequency = "Twice daily",
-                    reminderTimes = "7:00 AM, 7:00 PM",
-                    status = "Active"
-                )
-            )
-            val amlId = medicationDao.insertMedication(
-                MedicationEntity(
-                    name = "Amlodipine",
-                    dosage = "5mg",
-                    frequency = "Once daily",
-                    reminderTimes = "6:00 PM",
-                    status = "Active"
-                )
-            )
-            medicationDao.insertMedication(
-                MedicationEntity(
-                    name = "Amoxicillin",
-                    dosage = "250mg",
-                    frequency = "3x daily",
-                    reminderTimes = "8:00 AM, 2:00 PM, 8:00 PM",
-                    status = "Ended"
-                )
-            )
-
-            // Insert dose logs for today
-            medicationDao.insertDoseLogs(
-                listOf(
-                    DoseLogEntity(
-                        medicationId = metId,
-                        medicationName = "Metformin 500mg",
-                        scheduledTime = "7:00am",
-                        takenTime = "7:05am",
-                        status = "Taken",
-                        date = "Today"
-                    ),
-                    DoseLogEntity(
-                        medicationId = amlId,
-                        medicationName = "Amlodipine 5mg",
-                        scheduledTime = "6:00pm",
-                        takenTime = null,
-                        status = "Pending",
-                        date = "Today"
-                    )
-                )
-            )
-        }
+        // Default Medications Auto-Insertion Disabled:
+        // Calendar & Notifications will only show medications explicitly added by the user.
 
         // Initialize Default Health Readings
         val currentReadings = healthReadingDao.getAllReadings().first()
@@ -189,15 +138,14 @@ class HealthBridgeRepository(
         darkTheme: Boolean
     ) {
         val current = userDao.getUserSession().first() ?: UserSessionEntity()
-        userDao.insertOrUpdateUser(
-            current.copy(
-                fullName = fullName,
-                email = email,
-                preferredLanguage = preferredLanguage,
-                medicationRemindersEnabled = reminders,
-                darkThemeEnabled = darkTheme
-            )
+        val updated = current.copy(
+            fullName = fullName,
+            email = email,
+            preferredLanguage = preferredLanguage,
+            medicationRemindersEnabled = reminders,
+            darkThemeEnabled = darkTheme
         )
+        userDao.updateUser(updated)
     }
 
     suspend fun login(email: String, name: String, language: String) {
@@ -279,7 +227,13 @@ class HealthBridgeRepository(
         }
     }
 
-    suspend fun addMedication(name: String, dosage: String, frequency: String, reminderTimes: String) {
+    suspend fun addMedication(
+        name: String,
+        dosage: String,
+        frequency: String,
+        reminderTimes: String,
+        startDateIso: String = ""
+    ) {
         val medication = MedicationEntity(
             name = name,
             dosage = dosage,
@@ -290,7 +244,6 @@ class HealthBridgeRepository(
         )
         val medId = medicationDao.insertMedication(medication)
 
-        // Split reminder times and create a DoseLogEntity for EACH scheduled time
         val times = reminderTimes.split(",")
             .map { it.trim() }
             .filter { it.isNotEmpty() }
@@ -302,15 +255,37 @@ class HealthBridgeRepository(
             name
         }
 
-        val doseLogs = times.map { timeStr ->
-            DoseLogEntity(
-                medicationId = medId,
-                medicationName = displayName,
-                scheduledTime = timeStr,
-                status = "Pending",
-                date = "Today",
-                isPendingSync = true
-            )
+        val isoFormat = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US)
+        val startCal = java.util.Calendar.getInstance()
+        if (startDateIso.isNotBlank()) {
+            try {
+                val parsed = isoFormat.parse(startDateIso)
+                if (parsed != null) startCal.time = parsed
+            } catch (_: Exception) {}
+        }
+
+        val todayIso = isoFormat.format(java.util.Date())
+
+        val doseLogs = mutableListOf<DoseLogEntity>()
+        for (dayOffset in 0..30) {
+            val dayCal = startCal.clone() as java.util.Calendar
+            dayCal.add(java.util.Calendar.DAY_OF_YEAR, dayOffset)
+
+            val isoDateStr = isoFormat.format(dayCal.time)
+            val dateLabel = if (isoDateStr == todayIso) "Today" else isoDateStr
+
+            for (timeStr in times) {
+                doseLogs.add(
+                    DoseLogEntity(
+                        medicationId = medId,
+                        medicationName = displayName,
+                        scheduledTime = timeStr,
+                        status = "Pending",
+                        date = dateLabel,
+                        isPendingSync = true
+                    )
+                )
+            }
         }
         medicationDao.insertDoseLogs(doseLogs)
 

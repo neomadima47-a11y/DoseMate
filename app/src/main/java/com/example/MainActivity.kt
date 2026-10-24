@@ -36,6 +36,18 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun requestNotificationAndAlarmPermissions() {
+        // Request Location Permissions for Live GPS Tracking
+        val locationPermissions = arrayOf(
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        )
+        val missingLocations = locationPermissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
+        }
+        if (missingLocations.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, missingLocations.toTypedArray(), 102)
+        }
+
         // Request POST_NOTIFICATIONS runtime permission for Android 13+ (API 33+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -55,11 +67,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private var xmlController: XmlUiController? = null
+
     private fun renderEngine() {
         if (useXmlEngine) {
             setContentView(R.layout.activity_main)
             val rootLayout = findViewById<ViewGroup>(android.R.id.content)
-            val xmlController = XmlUiController(
+            xmlController = XmlUiController(
                 activity = this,
                 rootContainer = rootLayout,
                 viewModel = mainViewModel,
@@ -68,7 +82,7 @@ class MainActivity : ComponentActivity() {
                     renderEngine()
                 }
             )
-            xmlController.start()
+            xmlController?.start()
         } else {
             setContent {
                 val userSession by mainViewModel.userSession.collectAsState()
@@ -85,5 +99,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        xmlController?.handleActivityResult(requestCode, resultCode, data)
     }
 }

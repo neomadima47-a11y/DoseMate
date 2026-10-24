@@ -114,18 +114,45 @@ object MedicationNotificationScheduler {
         )
     }
 
-    fun cancelMedicationAlerts(context: Context, medicationId: Long) {
+    fun cancelMedicationAlerts(context: Context, medication: MedicationEntity) {
+        cancelMedicationAlerts(context, medication.id, medication.reminderTimes)
+    }
+
+    fun cancelMedicationAlerts(context: Context, medicationId: Long, reminderTimes: String = "") {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val intent = Intent(context, MedicationAlarmReceiver::class.java)
-        val requestCode = (medicationId * 1000).toInt().coerceAtLeast(1)
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            requestCode,
-            intent,
-            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
-        )
-        if (pendingIntent != null) {
-            alarmManager.cancel(pendingIntent)
+        val timesList = reminderTimes
+            .split(",")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+
+        if (timesList.isEmpty()) {
+            val requestCode = (medicationId * 1000).toInt().coerceAtLeast(1)
+            val intent = Intent(context, MedicationAlarmReceiver::class.java)
+            val pendingIntent = PendingIntent.getBroadcast(
+                context,
+                requestCode,
+                intent,
+                PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+            )
+            if (pendingIntent != null) {
+                alarmManager.cancel(pendingIntent)
+                pendingIntent.cancel()
+            }
+        } else {
+            for (timeStr in timesList) {
+                val requestCode = (medicationId * 1000 + timeStr.hashCode() % 1000).toInt().coerceAtLeast(1)
+                val intent = Intent(context, MedicationAlarmReceiver::class.java)
+                val pendingIntent = PendingIntent.getBroadcast(
+                    context,
+                    requestCode,
+                    intent,
+                    PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+                )
+                if (pendingIntent != null) {
+                    alarmManager.cancel(pendingIntent)
+                    pendingIntent.cancel()
+                }
+            }
         }
     }
 

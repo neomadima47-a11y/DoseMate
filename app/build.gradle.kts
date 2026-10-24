@@ -25,7 +25,7 @@ android {
     versionName = "1.0"
 
     buildConfigField("String", "MAPBOX_ACCESS_TOKEN", "\"pk.eyJ1IjoiZG9zZW1hdGUiLCJhIjoiY2x6c2FtdXBhMDAxbDJxb3FsaDRoNmp2biJ9.sample_token\"")
-    buildConfigField("String", "GROQ_API_KEY", "\"gsk_\" + \"440qJubghA6T63d8y0vzWGdyb3FYeVH6hNQAwlSXtNXsWcXIeRzE\"")
+    buildConfigField("String", "GEMINI_API_KEY", "\"MY_GEMINI_API_KEY\"")
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }

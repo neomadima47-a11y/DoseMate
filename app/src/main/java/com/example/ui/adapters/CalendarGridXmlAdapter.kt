@@ -12,6 +12,7 @@ import java.util.Calendar
 data class CalendarDayItem(
     val dayNumber: Int,
     val fullDateString: String,
+    val isoDateString: String,
     val calendar: Calendar?,
     val isCurrentMonth: Boolean,
     val status: DayAdherenceStatus,
@@ -19,10 +20,10 @@ data class CalendarDayItem(
 )
 
 enum class DayAdherenceStatus {
-    ALL_TAKEN,      // Green ✓
-    PARTIAL_PENDING,// Amber/Orange ⏰
-    MISSED,         // Amber/Orange ⏰
-    NO_DOSES        // None
+    ALL_TAKEN,          // Green ✓ Taken (Past/Today all taken)
+    NOT_TAKEN_DUE,      // Orange ⏰ Not Taken (Past/Today untaken/due)
+    UPCOMING_SCHEDULED, // Neutral ⏰ Scheduled (Future dates)
+    NO_DOSES            // None
 }
 
 class CalendarGridXmlAdapter(
@@ -65,8 +66,13 @@ class CalendarGridXmlAdapter(
                     holder.tvBadge.setTextColor(Color.WHITE)
                     holder.tvBadge.setBackgroundResource(0)
                 }
-                DayAdherenceStatus.PARTIAL_PENDING, DayAdherenceStatus.MISSED -> {
+                DayAdherenceStatus.NOT_TAKEN_DUE -> {
                     holder.tvBadge.text = "⏰ Not Taken"
+                    holder.tvBadge.setTextColor(Color.WHITE)
+                    holder.tvBadge.setBackgroundResource(0)
+                }
+                DayAdherenceStatus.UPCOMING_SCHEDULED -> {
+                    holder.tvBadge.text = "⏰ Scheduled"
                     holder.tvBadge.setTextColor(Color.WHITE)
                     holder.tvBadge.setBackgroundResource(0)
                 }
@@ -77,6 +83,7 @@ class CalendarGridXmlAdapter(
         } else {
             when (item.status) {
                 DayAdherenceStatus.ALL_TAKEN -> {
+                    // GREEN cell highlight for TAKEN doses
                     holder.layoutCellBg.setBackgroundResource(R.drawable.bg_badge_green)
                     holder.tvDayNum.setTextColor(Color.parseColor("#10B981"))
                     holder.tvBadge.visibility = View.VISIBLE
@@ -84,12 +91,22 @@ class CalendarGridXmlAdapter(
                     holder.tvBadge.setTextColor(Color.parseColor("#10B981"))
                     holder.tvBadge.setBackgroundResource(0)
                 }
-                DayAdherenceStatus.PARTIAL_PENDING, DayAdherenceStatus.MISSED -> {
+                DayAdherenceStatus.NOT_TAKEN_DUE -> {
+                    // ORANGE cell highlight for NOT TAKEN doses
                     holder.layoutCellBg.setBackgroundResource(R.drawable.bg_badge_amber)
                     holder.tvDayNum.setTextColor(Color.parseColor("#F59E0B"))
                     holder.tvBadge.visibility = View.VISIBLE
                     holder.tvBadge.text = "⏰ Not Taken"
                     holder.tvBadge.setTextColor(Color.parseColor("#F59E0B"))
+                    holder.tvBadge.setBackgroundResource(0)
+                }
+                DayAdherenceStatus.UPCOMING_SCHEDULED -> {
+                    // Neutral card for future dates
+                    holder.layoutCellBg.setBackgroundResource(R.drawable.bg_card_elevated)
+                    holder.tvDayNum.setTextColor(Color.parseColor("#F3F4F6"))
+                    holder.tvBadge.visibility = View.VISIBLE
+                    holder.tvBadge.text = "⏰ Scheduled"
+                    holder.tvBadge.setTextColor(Color.parseColor("#9CA3AF"))
                     holder.tvBadge.setBackgroundResource(0)
                 }
                 DayAdherenceStatus.NO_DOSES -> {

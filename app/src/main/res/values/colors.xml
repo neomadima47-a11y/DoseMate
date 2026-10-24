@@ -6,6 +6,8 @@
     <color name="teal_accent">#2DD4BF</color>
     <color name="teal_dark_bg">#121816</color>
     <color name="teal_card_bg_dark">#1E2623</color>
+
+    <!-- Medical Dark Surface Theme Colors -->
     <color name="dark_background">#111818</color>
     <color name="dark_surface">#1A2322</color>
     <color name="dark_surface_variant">#24302E</color>

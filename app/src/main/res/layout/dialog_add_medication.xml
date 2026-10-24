@@ -22,7 +22,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:text="Set daily frequency and exact alert time for every dose"
+            android:text="Set start date, daily frequency, and exact alert times"
             android:textSize="12sp"
             android:textColor="@color/text_secondary" />
 
@@ -47,6 +47,46 @@
             android:textColorHint="@color/text_muted"
             android:textSize="14sp"
             android:background="@drawable/bg_edit_text" />
+
+        <!-- Schedule Start Date -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="Prescription Start Date"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:background="@drawable/bg_card_elevated"
+            android:padding="10dp">
+
+            <TextView
+                android:id="@+id/tv_dialog_start_date_val"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Today (Starts Immediately)"
+                android:textColor="@color/teal_accent"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btn_dialog_pick_start_date"
+                android:layout_width="wrap_content"
+                android:layout_height="36dp"
+                android:background="@drawable/bg_button_secondary"
+                android:paddingHorizontal="10dp"
+                android:text="📅 Pick Date"
+                android:textColor="@color/text_primary"
+                android:textSize="11sp" />
+        </LinearLayout>
 
         <!-- Daily Frequency Selection -->
         <TextView

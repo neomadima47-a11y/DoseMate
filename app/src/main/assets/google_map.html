@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Live Google Map Navigation</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #111818; overflow: hidden; }
+        #map { width: 100%; height: 100%; }
+        .user-pin {
+            background-color: #3B82F6;
+            border: 3px solid #FFFFFF;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            box-shadow: 0 0 14px rgba(59, 130, 246, 0.9);
+        }
+        .clinic-pin {
+            background-color: #1D9E75;
+            color: #FFFFFF;
+            border: 2px solid #FFFFFF;
+            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            cursor: pointer;
+        }
+        .leaflet-popup-content-wrapper {
+            background: #1A2322;
+            color: #F3F4F6;
+            border-radius: 14px;
+            border: 1px solid #2E3D35;
+            font-family: sans-serif;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+            padding: 4px;
+        }
+        .leaflet-popup-tip { background: #1A2322; }
+        .popup-title { font-weight: bold; font-size: 15px; color: #2DD4BF; margin-bottom: 4px; }
+        .popup-desc { font-size: 12px; color: #9CA3AF; margin-bottom: 8px; line-height: 1.4; }
+        .btn-nav-start {
+            background: #1D9E75;
+            color: #FFFFFF;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            width: 100%;
+            box-shadow: 0 2px 6px rgba(29, 158, 117, 0.4);
+        }
+        .btn-nav-start:active { background: #14B8A6; }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <script>
+        const googleApiKey = 'AIzaSyDUyHMX4LRgyGKc--lHxKdHTjCOiPT5DhU';
+        let userLat = -25.7479;
+        let userLng = 28.2293;
+        let isUserInteractingWithMap = false;
+        let isNavigating = false;
+        let activeDestination = null;
+
+        const map = L.map('map', { zoomControl: true, attributionControl: false }).setView([userLat, userLng], 14);
+
+        // Allow user to freely drag, pan, and zoom without camera lock
+        map.on('dragstart zoomstart', function() {
+            isUserInteractingWithMap = true;
+        });
+
+        // Click ANYWHERE on the map to select location and offer navigation
+        map.on('click', function(e) {
+            if (e && e.latlng) {
+                selectLocationAndAsk(e.latlng.lat, e.latlng.lng, "Selected Location");
+            }
+        });
+
+        // Google Maps tile layer (roadmap) with Google API Key
+        L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}&key=' + googleApiKey, {
+            maxZoom: 20
+        }).addTo(map);
+
+        // User Live Location Marker
+        const userIcon = L.divIcon({
+            className: 'user-pin-container',
+            html: '<div class="user-pin"></div>',
+            iconSize: [22, 22], iconAnchor: [11, 11]
+        });
+
+        const userMarker = L.marker([userLat, userLng], { icon: userIcon })
+            .addTo(map)
+            .bindPopup('<div class="popup-title">📍 Live GPS Location</div><div class="popup-desc">Moving with you in real-time</div>');
+
+        let markers = [];
+        let routePolyline = null;
+
+        function updateUserLocation(lat, lng) {
+            userLat = lat;
+            userLng = lng;
+            userMarker.setLatLng([lat, lng]);
+            if (!isUserInteractingWithMap && !routePolyline && !isNavigating) {
+                map.panTo([lat, lng], { animate: true, duration: 1.0 });
+            }
+        }
+
+        function recenterUserLocation() {
+            isUserInteractingWithMap = false;
+            map.setView([userLat, userLng], 15, { animate: true });
+            userMarker.openPopup();
+        }
+
+        function clearRoute() {
+            isNavigating = false;
+            if (routePolyline) {
+                try { map.removeLayer(routePolyline); } catch(e){}
+                routePolyline = null;
+            }
+            // Guaranteed removal of all polyline path layers from map
+            map.eachLayer(function(layer) {
+                if (layer instanceof L.Polyline) {
+                    try { map.removeLayer(layer); } catch(e){}
+                }
+            });
+        }
+
+        function clearDirectionsRoute() {
+            clearRoute();
+            markers.forEach(m => {
+                try { map.removeLayer(m); } catch(e){}
+            });
+            markers = [];
+            activeDestination = null;
+            try { map.closePopup(); } catch(e){}
+            isUserInteractingWithMap = false;
+            map.setView([userLat, userLng], 14, { animate: true });
+            userMarker.openPopup();
+        }
+
+        function selectLocationAndAsk(lat, lng, name) {
+            markers.forEach(m => {
+                try { map.removeLayer(m); } catch(e){}
+            });
+            markers = [];
+            clearRoute();
+
+            activeDestination = { lat: lat, lng: lng, name: name };
+
+            const isMedical = (name || '').toLowerCase().match(/(hospital|clinic|doctor|pharmacy|emergency|health|medical|care|dentist|surgery)/);
+            const pinIcon = isMedical ? '🏥' : '📍';
+
+            const icon = L.divIcon({
+                className: 'clinic-pin-container',
+                html: '<div class="clinic-pin">' + pinIcon + '</div>',
+                iconSize: [34, 34], iconAnchor: [17, 17]
+            });
+
+            const popupContent =
+                '<div class="popup-title">' + pinIcon + ' ' + name + '</div>' +
+                '<div class="popup-desc">Do you want to start road navigation to this location?</div>' +
+                '<button class="btn-nav-start" onclick="startNavigationToActive()">🧭 Start Navigation</button>';
+
+            const marker = L.marker([lat, lng], { icon: icon })
+                .addTo(map)
+                .bindPopup(popupContent)
+                .openPopup();
+
+            markers.push(marker);
+        }
+
+        function startNavigationToActive() {
+            if (activeDestination) {
+                drawRouteTo(activeDestination.lat, activeDestination.lng, activeDestination.name);
+            }
+        }
+
+        function drawRouteTo(destLat, destLng, destName) {
+            clearRoute();
+            isNavigating = true;
+
+            // Fetch turn-by-turn road route from OSRM following actual street networks
+            const osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' + userLng + ',' + userLat + ';' + destLat + ',' + destLng + '?overview=full&geometries=geojson';
+
+            fetch(osrmUrl)
+                .then(res => res.json())
+                .then(data => {
+                    if (!isNavigating) return; // Ignore if user clicked Cancel while fetch was loading
+
+                    if (data && data.routes && data.routes.length > 0) {
+                        const route = data.routes[0];
+                        const coords = route.geometry.coordinates; // [lng, lat]
+                        const latLngs = coords.map(pt => [pt[1], pt[0]]); // [lat, lng]
+
+                        const distKm = (route.distance / 1000).toFixed(1);
+                        const durationMins = Math.round(route.duration / 60);
+
+                        routePolyline = L.polyline(latLngs, {
+                            color: '#1D9E75',
+                            weight: 6,
+                            opacity: 0.95,
+                            lineJoin: 'round',
+                            lineCap: 'round'
+                        }).addTo(map);
+
+                        const bounds = L.latLngBounds(latLngs);
+                        map.fitBounds(bounds, { padding: [40, 40] });
+
+                        const popupContent =
+                            '<div class="popup-title">🧭 Navigation to ' + destName + '</div>' +
+                            '<div class="popup-desc"><b>Distance:</b> ' + distKm + ' km • <b>Est. Drive:</b> ~' + durationMins + ' mins<br/>' +
+                            '<span style="color:#10B981; font-weight:bold;">● Live Navigation Active</span></div>';
+
+                        L.popup()
+                            .setLatLng([destLat, destLng])
+                            .setContent(popupContent)
+                            .openOn(map);
+                    } else {
+                        if (isNavigating) drawFallbackPolyline(destLat, destLng, destName);
+                    }
+                })
+                .catch(err => {
+                    console.warn("OSRM routing error:", err);
+                    if (isNavigating) drawFallbackPolyline(destLat, destLng, destName);
+                });
+        }
+
+        function drawFallbackPolyline(destLat, destLng, destName) {
+            if (!isNavigating) return;
+            const latlngs = [[userLat, userLng], [destLat, destLng]];
+            routePolyline = L.polyline(latlngs, {
+                color: '#1D9E75',
+                weight: 5,
+                opacity: 0.9,
+                dashArray: '8, 8'
+            }).addTo(map);
+
+            const bounds = L.latLngBounds(latlngs);
+            map.fitBounds(bounds, { padding: [40, 40] });
+
+            L.popup()
+                .setLatLng([destLat, destLng])
+                .setContent('<div class="popup-title">🧭 Navigation to ' + destName + '</div><div class="popup-desc">Direct route guidance active</div>')
+                .openOn(map);
+        }
+
+        function searchLocation(lat, lng, name) {
+            selectLocationAndAsk(lat, lng, name);
+        }
+
+        // Web Geolocation Fallback for Live GPS Tracking
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(function(pos) {
+                if (pos && pos.coords) {
+                    updateUserLocation(pos.coords.latitude, pos.coords.longitude);
+                }
+            }, function(err) {
+                console.warn("Geolocation watch error:", err);
+            }, {
+                enableHighAccuracy: true,
+                maximumAge: 1000,
+                timeout: 10000
+            });
+        }
+    </script>
+</body>
+</html>

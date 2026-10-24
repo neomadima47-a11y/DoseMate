@@ -293,38 +293,7 @@ fun SettingsScreen(
                 Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.surfaceVariant))
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // 3. Dark Mode Toggle
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 6.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.DarkMode, contentDescription = null, tint = TealSecondary)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = Strings.get("dark_mode", language),
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-
-                    Switch(
-                        checked = userSession?.darkThemeEnabled ?: true,
-                        onCheckedChange = { onToggleDarkTheme(it) },
-                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = TealPrimary),
-                        modifier = Modifier.testTag("dark_mode_switch")
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-                Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.surfaceVariant))
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // 4. Change Password
+                // 3. Change Password
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
