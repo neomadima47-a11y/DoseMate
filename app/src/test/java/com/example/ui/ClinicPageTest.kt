@@ -21,7 +21,7 @@ class ClinicPageTest {
     }
 
     @Test
-    fun testMedicalQueryKeywordsValidation() {
+    fun test1_verifyMedicalKeywordsValidationForSearch() {
         // Medical places MUST return true for directions
         assertTrue(isMedicalQuery("Steve Biko Academic Hospital"))
         assertTrue(isMedicalQuery("Sunnyside Community Clinic"))
@@ -29,14 +29,14 @@ class ClinicPageTest {
         assertTrue(isMedicalQuery("Dis-Chem Pharmacy"))
         assertTrue(isMedicalQuery("Emergency Medical Care"))
 
-        // Non-medical places MUST return false (directions restricted)
+        // Non-medical places MUST return false
         assertFalse(isMedicalQuery("Brooklyn Shopping Mall"))
         assertFalse(isMedicalQuery("Coffee Shop"))
         assertFalse(isMedicalQuery("Clothing Store"))
     }
 
     @Test
-    fun testHaversineDistanceCalculationForClinicPage() {
+    fun test2_calculateHaversineGpsDistanceToNearbyFacility() {
         // Pretoria CBD GPS coordinates
         val userLat = -25.7479
         val userLng = 28.2293
@@ -47,13 +47,12 @@ class ClinicPageTest {
 
         val distanceKm = calculateDistanceKm(userLat, userLng, clinicLat, clinicLng)
 
-        // Distance should be around ~0.2 km to 0.3 km
         assertTrue(distanceKm > 0.1)
         assertTrue(distanceKm < 1.0)
     }
 
     @Test
-    fun testClinicListSortingByDistance() {
+    fun test3_sortClinicListFromClosestToFarthest() {
         val clinics = listOf(
             ClinicEntity(id = 1, name = "Far Hospital", distanceKm = 12.5, openHours = "24/7", address = "123 Far St", phone = "+27 12 354 1000"),
             ClinicEntity(id = 2, name = "Close Clinic", distanceKm = 0.8, openHours = "24/7", address = "45 Close St", phone = "+27 12 354 1000"),

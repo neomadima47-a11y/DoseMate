@@ -9,7 +9,7 @@ import org.junit.Test
 class GoogleMapsNavigationTest {
 
     @Test
-    fun testVoiceSearchSpeechResultPopulatesSearchQuery() {
+    fun test1_convertVoiceSpeechToTextQuery() {
         val voiceSpokenResults = listOf("Sunnyside Community Clinic", "Sunnyside Clinic", "Clinic")
         val topSpokenResult = voiceSpokenResults.firstOrNull()
 
@@ -18,7 +18,7 @@ class GoogleMapsNavigationTest {
     }
 
     @Test
-    fun testTapToNavigateRouteCalculation() {
+    fun test2_calculateRoadDistanceAndEstDriveTimeOnMapTap() {
         // Pretoria user GPS location
         val userLat = -25.7479
         val userLng = 28.2293
@@ -37,7 +37,7 @@ class GoogleMapsNavigationTest {
     }
 
     @Test
-    fun testLiveGpsMovementUpdatesUserPinPosition() {
+    fun test3_updateUserLocationPinOnLiveGpsMovement() {
         val userLat = -25.7485
         val userLng = 28.2299
 

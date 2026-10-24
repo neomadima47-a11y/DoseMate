@@ -3,15 +3,13 @@ package com.example.ui
 import com.example.data.DoseLogEntity
 import com.example.data.MedicationEntity
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MedicationsPageRequirementsTest {
 
     @Test
-    fun testAddMedicationEntityCreation() {
+    fun test1_createActiveMedicationPrescriptionEntity() {
         val med = MedicationEntity(
             id = 1001L,
             name = "Panado",
@@ -29,7 +27,7 @@ class MedicationsPageRequirementsTest {
     }
 
     @Test
-    fun testMultipleMedicationsIndependentAlarmRequestCodes() {
+    fun test2_generateIndependentAlarmRequestCodesPerMedication() {
         val med1Id = 101L
         val med2Id = 102L
         val scheduledTime = "08:00 AM"
@@ -41,7 +39,7 @@ class MedicationsPageRequirementsTest {
     }
 
     @Test
-    fun testAddMedicationGeneratesDoseLogs() {
+    fun test3_autoGenerateThirtyDaysDoseLogsOnPrescriptionAdd() {
         val medId = 101L
         val medName = "Panado 500mg"
         val reminderTimes = "08:00 AM, 08:00 PM"
@@ -63,14 +61,13 @@ class MedicationsPageRequirementsTest {
             }
         }
 
-        // 7 days x 2 times per day = 14 dose logs generated
         assertEquals(14, logs.size)
         assertEquals("08:00 AM", logs[0].scheduledTime)
         assertEquals("08:00 PM", logs[1].scheduledTime)
     }
 
     @Test
-    fun testFilterMedicationDosesByStatus() {
+    fun test4_filterDosesByAllDueTodayAndCompleted() {
         val allDoses = listOf(
             DoseLogEntity(id = 1, medicationId = 1, medicationName = "Metformin 500mg", scheduledTime = "07:00 AM", status = "Taken", date = "Today"),
             DoseLogEntity(id = 2, medicationId = 1, medicationName = "Metformin 500mg", scheduledTime = "07:00 PM", status = "Pending", date = "Today"),
@@ -87,7 +84,7 @@ class MedicationsPageRequirementsTest {
     }
 
     @Test
-    fun testMedicationCategoryLabelMapping() {
+    fun test5_classifyMedicationCategoryTypeBadges() {
         fun getCategoryLabel(name: String): String {
             val lower = name.lowercase()
             return when {

@@ -11,7 +11,26 @@ import org.junit.Test
 class MedicationSystemTest {
 
     @Test
-    fun testDoseAlreadyTakenCheckPreventsDuplicateNotifications() {
+    fun test1_recordTakenTimestampWhenDoseMarkedTaken() {
+        val pendingDose = DoseLogEntity(
+            id = 5,
+            medicationId = 50,
+            medicationName = "Panado 500mg",
+            scheduledTime = "08:00 AM",
+            takenTime = null,
+            status = "Pending",
+            date = "2026-10-24"
+        )
+
+        val takenDose = pendingDose.copy(status = "Taken", takenTime = "08:02 AM")
+
+        assertEquals("Taken", takenDose.status)
+        assertEquals("08:02 AM", takenDose.takenTime)
+        assertNull(pendingDose.takenTime)
+    }
+
+    @Test
+    fun test2_skipDuplicateNotificationIfDoseTakenToday() {
         val logs = listOf(
             DoseLogEntity(
                 id = 1,
@@ -36,7 +55,7 @@ class MedicationSystemTest {
     }
 
     @Test
-    fun testPendingDoseTriggersNotification() {
+    fun test3_triggerHighPriorityAlertForPendingDose() {
         val logs = listOf(
             DoseLogEntity(
                 id = 2,
@@ -61,27 +80,7 @@ class MedicationSystemTest {
     }
 
     @Test
-    fun testMarkingDoseTakenUpdatesTakenTimeAndStatus() {
-        val pendingDose = DoseLogEntity(
-            id = 5,
-            medicationId = 50,
-            medicationName = "Panado 500mg",
-            scheduledTime = "08:00 AM",
-            takenTime = null,
-            status = "Pending",
-            date = "2026-10-24"
-        )
-
-        // Simulate marking dose as taken
-        val takenDose = pendingDose.copy(status = "Taken", takenTime = "08:02 AM")
-
-        assertEquals("Taken", takenDose.status)
-        assertEquals("08:02 AM", takenDose.takenTime)
-        assertNull(pendingDose.takenTime)
-    }
-
-    @Test
-    fun testDeactivatingMedicationCancelsScheduledNotifications() {
+    fun test4_cancelScheduledAlarmsWhenMedicationEnded() {
         val medications = listOf(
             MedicationEntity(id = 1, name = "Panado", dosage = "500mg", frequency = "Twice daily", reminderTimes = "8:00 AM", status = "Active"),
             MedicationEntity(id = 2, name = "Amlodipine", dosage = "5mg", frequency = "Once daily", reminderTimes = "6:00 PM", status = "Ended")
@@ -94,7 +93,7 @@ class MedicationSystemTest {
     }
 
     @Test
-    fun testStripDoctorDisclaimersFromAiResponse() {
+    fun test5_stripDoctorDisclaimersFromAiResponseText() {
         val rawAiText = "Take Panado 500mg every 4-6 hours. Please consult your doctor for further guidance."
         val disclaimerPattern = Regex("(?i)please (consult|talk to|see|contact) (your|a) (doctor|physician|healthcare provider|pharmacist)[^.\\n]*[.\\n]?")
         val cleaned = rawAiText.replace(disclaimerPattern, "").trim()
