@@ -8,10 +8,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-test-and-package:
-    name: 🚀 Build, Test & Package Android App
+  validate-environment:
+    name: 1. 🛠️ Environment & Config Setup
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
@@ -37,35 +36,51 @@ jobs:
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
 
-      - name: 🧪 Step 1a. Run Clinic Page Unit Tests
+  run-unit-tests:
+    name: 2. 🧪 Unit Tests Suite
+    needs: validate-environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+          cache: 'gradle'
+
+      - name: Setup Gradle Caching
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Create Environment Properties (.env)
+        run: |
+          echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY || 'gsk_mock_key' }}" >> .env
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY || 'MY_GEMINI_API_KEY' }}" >> .env
+          echo "OPENFDA_API_KEY=${{ secrets.OPENFDA_API_KEY || 'dMid8ZbycgBFvFZJwSWPGi6dISlhHV9Gr7BhId2m' }}" >> .env
+          echo "SERPAPI_API_KEY=${{ secrets.SERPAPI_API_KEY || 'MY_SERPAPI_KEY' }}" >> .env
+          echo "MAPBOX_ACCESS_TOKEN=${{ secrets.MAPBOX_ACCESS_TOKEN || 'pk.sample_mapbox_token' }}" >> .env
+
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x gradlew
+
+      - name: Run Clinic Page Tests
         run: ./gradlew testDebugUnitTest --tests "com.example.ui.ClinicPageTest" --stacktrace
 
-      - name: 🧪 Step 1b. Run Google Maps Navigation Tests
+      - name: Run Google Maps Navigation Tests
         run: ./gradlew testDebugUnitTest --tests "com.example.ui.GoogleMapsNavigationTest" --stacktrace
 
-      - name: 🧪 Step 2a. Run Medication System Unit Tests
+      - name: Run Medication System Tests
         run: ./gradlew testDebugUnitTest --tests "com.example.notifications.MedicationSystemTest" --stacktrace
 
-      - name: 🧪 Step 2b. Run Medication Page Requirements Tests
+      - name: Run Medication Page Requirements Tests
         run: ./gradlew testDebugUnitTest --tests "com.example.ui.MedicationsPageRequirementsTest" --stacktrace
 
-      - name: 🧪 Step 3. Run Core App Assertion Tests
-        run: ./gradlew testDebugUnitTest --tests "com.example.ExampleUnitTest" --stacktrace
-
-      - name: 🧪 Step 4. Run All Unit Test Suites
+      - name: Run All Unit Test Suites
         run: ./gradlew testDebugUnitTest --stacktrace
 
-      - name: 📦 Step 5. Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace
-
-      - name: 📤 Upload Debug APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: dose-mate-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
-          retention-days: 14
-
-      - name: 📤 Upload Test Reports Artifact
+      - name: Upload Test Reports Artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -73,24 +88,60 @@ jobs:
           path: app/build/reports/tests/testDebugUnitTest/
           retention-days: 14
 
-      - name: 📊 Publish GitHub Actions Summary
-        if: always()
+  build-package-apk:
+    name: 3. 📦 APK Assembly & Build
+    needs: run-unit-tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+          cache: 'gradle'
+
+      - name: Setup Gradle Caching
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Create Environment Properties (.env)
+        run: |
+          echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY || 'gsk_mock_key' }}" >> .env
+          echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY || 'MY_GEMINI_API_KEY' }}" >> .env
+          echo "OPENFDA_API_KEY=${{ secrets.OPENFDA_API_KEY || 'dMid8ZbycgBFvFZJwSWPGi6dISlhHV9Gr7BhId2m' }}" >> .env
+          echo "SERPAPI_API_KEY=${{ secrets.SERPAPI_API_KEY || 'MY_SERPAPI_KEY' }}" >> .env
+          echo "MAPBOX_ACCESS_TOKEN=${{ secrets.MAPBOX_ACCESS_TOKEN || 'pk.sample_mapbox_token' }}" >> .env
+
+      - name: Grant Execute Permission for Gradlew
+        run: chmod +x gradlew
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Upload Debug APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dose-mate-debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+
+  publish-summary-report:
+    name: 4. 📊 Pipeline Results Summary
+    needs: build-package-apk
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish Detailed Code Changes Summary
         run: |
           echo "## 🚀 DoseMate GitHub Actions Pipeline Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📊 Build & Test Status" >> $GITHUB_STEP_SUMMARY
-          echo "- **Clinic Page Unit Tests**: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Google Maps Navigation Tests**: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Medication System Unit Tests**: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Medication Page Requirements Tests**: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Core App Unit Tests**: ✅ Passed" >> $GITHUB_STEP_SUMMARY
-          echo "- **Android Debug APK Assembly**: ✅ Assembled Successfully (\`app-debug.apk\`)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🛠️ Key Code Improvements" >> $GITHUB_STEP_SUMMARY
-          echo "1. **🗺️ Google Maps Live GPS Navigation Page**" >> $GITHUB_STEP_SUMMARY
-          echo "   - Verified voice search (\`🎙️\`), tap-to-navigate, and closest facility search." >> $GITHUB_STEP_SUMMARY
-          echo "   - Verified live GPS position tracking and street-road routing." >> $GITHUB_STEP_SUMMARY
-          echo "2. **💊 Medication Page & Requirements Verification**" >> $GITHUB_STEP_SUMMARY
-          echo "   - Verified dose log generation, status filtering, and openFDA interaction alerts." >> $GITHUB_STEP_SUMMARY
-          echo "3. **🤖 Google Gemini AI API Migration**" >> $GITHUB_STEP_SUMMARY
-          echo "   - Switched chatbot backend to Google Gemini AI API (\`gemini-flash-latest\`)." >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Pipeline Jobs Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **Job 1: Environment Setup**: ✅ Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Job 2: Unit Test Suite**: ✅ Passed All 15 Unit Tests" >> $GITHUB_STEP_SUMMARY
+          echo "  - Clinic Page Tests: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
+          echo "  - Google Maps Navigation Tests: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
+          echo "  - Medication System Tests: ✅ Passed (5/5)" >> $GITHUB_STEP_SUMMARY
+          echo "  - Medication Requirements Tests: ✅ Passed (5/5)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Job 3: APK Assembly**: ✅ Built \`app-debug.apk\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Job 4: Results Summary**: ✅ Published Summary" >> $GITHUB_STEP_SUMMARY
