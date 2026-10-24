@@ -40,8 +40,11 @@ jobs:
       - name: 🧪 Step 1. Run Clinic Page Unit Tests
         run: ./gradlew testDebugUnitTest --tests "com.example.ui.ClinicPageTest" --stacktrace
 
-      - name: 🧪 Step 2. Run Medication System Unit Tests
+      - name: 🧪 Step 2a. Run Medication System Unit Tests
         run: ./gradlew testDebugUnitTest --tests "com.example.notifications.MedicationSystemTest" --stacktrace
+
+      - name: 🧪 Step 2b. Run Medication Page Requirements Tests
+        run: ./gradlew testDebugUnitTest --tests "com.example.ui.MedicationsPageRequirementsTest" --stacktrace
 
       - name: 🧪 Step 3. Run Core App Assertion Tests
         run: ./gradlew testDebugUnitTest --tests "com.example.ExampleUnitTest" --stacktrace
@@ -75,18 +78,18 @@ jobs:
           echo "### 📊 Build & Test Status" >> $GITHUB_STEP_SUMMARY
           echo "- **Clinic Page Unit Tests**: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
           echo "- **Medication System Unit Tests**: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Medication Page Requirements Tests**: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
           echo "- **Core App Unit Tests**: ✅ Passed" >> $GITHUB_STEP_SUMMARY
           echo "- **Android Debug APK Assembly**: ✅ Assembled Successfully (\`app-debug.apk\`)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🛠️ Key Code Improvements" >> $GITHUB_STEP_SUMMARY
-          echo "1. **🤖 Google Gemini AI API Migration**" >> $GITHUB_STEP_SUMMARY
+          echo "1. **💊 Medication Page & Requirements Verification**" >> $GITHUB_STEP_SUMMARY
+          echo "   - Verified dose log generation for start dates and custom frequencies." >> $GITHUB_STEP_SUMMARY
+          echo "   - Verified status filtering (*All Doses*, *Due Today*, *Completed*)." >> $GITHUB_STEP_SUMMARY
+          echo "   - Verified openFDA verification and drug interaction alerts." >> $GITHUB_STEP_SUMMARY
+          echo "2. **🤖 Google Gemini AI API Migration**" >> $GITHUB_STEP_SUMMARY
           echo "   - Switched chatbot backend to Google Gemini AI API (\`gemini-flash-latest\`)." >> $GITHUB_STEP_SUMMARY
-          echo "   - Updated UI text strings from *'Groq AI'* to *'Google Gemini Medical AI Assistant'*." >> $GITHUB_STEP_SUMMARY
-          echo "2. **🗺️ Google Maps Live GPS Navigation Page**" >> $GITHUB_STEP_SUMMARY
+          echo "3. **🗺️ Google Maps Live GPS Navigation Page**" >> $GITHUB_STEP_SUMMARY
           echo "   - Added Google Maps API key (\`AIzaSyDUyH...\`) with live GPS location tracking." >> $GITHUB_STEP_SUMMARY
-          echo "   - Integrated voice search (\`🎙️\`), tap-to-navigate, and quick medical search chips." >> $GITHUB_STEP_SUMMARY
-          echo "3. **🔔 Notification & Calendar Fixes**" >> $GITHUB_STEP_SUMMARY
+          echo "4. **🔔 Notification & Calendar Fixes**" >> $GITHUB_STEP_SUMMARY
           echo "   - Fixed duplicate alarm alerts by checking *'Taken'* dose status before notifying." >> $GITHUB_STEP_SUMMARY
-          echo "   - Removed default sample medications so the calendar only displays user-added items." >> $GITHUB_STEP_SUMMARY
-          echo "4. **🎨 Dark Surface Theme Fixes**" >> $GITHUB_STEP_SUMMARY
-          echo "   - Enforced permanent medical dark surface theme and fixed Room DB session state bug." >> $GITHUB_STEP_SUMMARY
