@@ -65,19 +65,35 @@ jobs:
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
 
-      - name: Run Clinic Page Tests
-        run: ./gradlew testDebugUnitTest --tests "com.example.ui.ClinicPageTest" --stacktrace
+      - name: "🧪 Test Suite 1: Clinic Page Search & Distance"
+        run: |
+          echo "=========================================="
+          echo "🏥 RUNNING: Clinic Page Search & Distance Tests"
+          echo "=========================================="
+          ./gradlew testDebugUnitTest --tests "com.example.ui.ClinicPageTest" --info
 
-      - name: Run Google Maps Navigation Tests
-        run: ./gradlew testDebugUnitTest --tests "com.example.ui.GoogleMapsNavigationTest" --stacktrace
+      - name: "🧪 Test Suite 2: Google Maps GPS & Voice Navigation"
+        run: |
+          echo "=========================================="
+          echo "🗺️ RUNNING: Google Maps GPS & Voice Navigation Tests"
+          echo "=========================================="
+          ./gradlew testDebugUnitTest --tests "com.example.ui.GoogleMapsNavigationTest" --info
 
-      - name: Run Medication System Tests
-        run: ./gradlew testDebugUnitTest --tests "com.example.notifications.MedicationSystemTest" --stacktrace
+      - name: "🧪 Test Suite 3: Taken Dose & Alert Suppression"
+        run: |
+          echo "=========================================="
+          echo "🔔 RUNNING: Taken Dose & Alert Suppression Tests"
+          echo "=========================================="
+          ./gradlew testDebugUnitTest --tests "com.example.notifications.MedicationSystemTest" --info
 
-      - name: Run Medication Page Requirements Tests
-        run: ./gradlew testDebugUnitTest --tests "com.example.ui.MedicationsPageRequirementsTest" --stacktrace
+      - name: "🧪 Test Suite 4: Medication Schedule & Filter Requirements"
+        run: |
+          echo "=========================================="
+          echo "💊 RUNNING: Medication Schedule & Filter Requirements Tests"
+          echo "=========================================="
+          ./gradlew testDebugUnitTest --tests "com.example.ui.MedicationsPageRequirementsTest" --info
 
-      - name: Run All Unit Test Suites
+      - name: "🧪 Test Suite 5: Run Full Suite Verification"
         run: ./gradlew testDebugUnitTest --stacktrace
 
       - name: Upload Test Reports Artifact
