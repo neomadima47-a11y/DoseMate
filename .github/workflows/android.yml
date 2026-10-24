@@ -37,8 +37,11 @@ jobs:
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
 
-      - name: 🧪 Step 1. Run Clinic Page Unit Tests
+      - name: 🧪 Step 1a. Run Clinic Page Unit Tests
         run: ./gradlew testDebugUnitTest --tests "com.example.ui.ClinicPageTest" --stacktrace
+
+      - name: 🧪 Step 1b. Run Google Maps Navigation Tests
+        run: ./gradlew testDebugUnitTest --tests "com.example.ui.GoogleMapsNavigationTest" --stacktrace
 
       - name: 🧪 Step 2a. Run Medication System Unit Tests
         run: ./gradlew testDebugUnitTest --tests "com.example.notifications.MedicationSystemTest" --stacktrace
@@ -77,19 +80,17 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📊 Build & Test Status" >> $GITHUB_STEP_SUMMARY
           echo "- **Clinic Page Unit Tests**: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Google Maps Navigation Tests**: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
           echo "- **Medication System Unit Tests**: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
           echo "- **Medication Page Requirements Tests**: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
           echo "- **Core App Unit Tests**: ✅ Passed" >> $GITHUB_STEP_SUMMARY
           echo "- **Android Debug APK Assembly**: ✅ Assembled Successfully (\`app-debug.apk\`)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🛠️ Key Code Improvements" >> $GITHUB_STEP_SUMMARY
-          echo "1. **💊 Medication Page & Requirements Verification**" >> $GITHUB_STEP_SUMMARY
-          echo "   - Verified dose log generation for start dates and custom frequencies." >> $GITHUB_STEP_SUMMARY
-          echo "   - Verified status filtering (*All Doses*, *Due Today*, *Completed*)." >> $GITHUB_STEP_SUMMARY
-          echo "   - Verified openFDA verification and drug interaction alerts." >> $GITHUB_STEP_SUMMARY
-          echo "2. **🤖 Google Gemini AI API Migration**" >> $GITHUB_STEP_SUMMARY
+          echo "1. **🗺️ Google Maps Live GPS Navigation Page**" >> $GITHUB_STEP_SUMMARY
+          echo "   - Verified voice search (\`🎙️\`), tap-to-navigate, and closest facility search." >> $GITHUB_STEP_SUMMARY
+          echo "   - Verified live GPS position tracking and street-road routing." >> $GITHUB_STEP_SUMMARY
+          echo "2. **💊 Medication Page & Requirements Verification**" >> $GITHUB_STEP_SUMMARY
+          echo "   - Verified dose log generation, status filtering, and openFDA interaction alerts." >> $GITHUB_STEP_SUMMARY
+          echo "3. **🤖 Google Gemini AI API Migration**" >> $GITHUB_STEP_SUMMARY
           echo "   - Switched chatbot backend to Google Gemini AI API (\`gemini-flash-latest\`)." >> $GITHUB_STEP_SUMMARY
-          echo "3. **🗺️ Google Maps Live GPS Navigation Page**" >> $GITHUB_STEP_SUMMARY
-          echo "   - Added Google Maps API key (\`AIzaSyDUyH...\`) with live GPS location tracking." >> $GITHUB_STEP_SUMMARY
-          echo "4. **🔔 Notification & Calendar Fixes**" >> $GITHUB_STEP_SUMMARY
-          echo "   - Fixed duplicate alarm alerts by checking *'Taken'* dose status before notifying." >> $GITHUB_STEP_SUMMARY

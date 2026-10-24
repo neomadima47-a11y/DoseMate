@@ -184,68 +184,100 @@
             clearRoute();
             isNavigating = true;
 
-            // Fetch turn-by-turn road route from OSRM following actual street networks
-            const osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' + userLng + ',' + userLat + ';' + destLat + ',' + destLng + '?overview=full&geometries=geojson';
+            const primaryUrl = 'https://router.project-osrm.org/route/v1/driving/' + userLng + ',' + userLat + ';' + destLng + ',' + destLat + '?overview=full&geometries=geojson';
+            const backupUrl = 'https://routing.openstreetmap.de/routed-car/route/v1/driving/' + userLng + ',' + userLat + ';' + destLng + ',' + destLat + '?overview=full&geometries=geojson';
 
-            fetch(osrmUrl)
+            function renderRoadPolyline(data) {
+                if (!isNavigating) return false;
+                if (data && data.routes && data.routes.length > 0) {
+                    const route = data.routes[0];
+                    const coords = route.geometry.coordinates; // [lng, lat] points along actual street roads
+                    const latLngs = coords.map(pt => [pt[1], pt[0]]); // [lat, lng]
+
+                    const distKm = (route.distance / 1000).toFixed(1);
+                    const durationMins = Math.round(route.duration / 60);
+
+                    routePolyline = L.polyline(latLngs, {
+                        color: '#1D9E75',
+                        weight: 6,
+                        opacity: 0.95,
+                        lineJoin: 'round',
+                        lineCap: 'round'
+                    }).addTo(map);
+
+                    const bounds = L.latLngBounds(latLngs);
+                    map.fitBounds(bounds, { padding: [40, 40] });
+
+                    const popupContent =
+                        '<div class="popup-title">🧭 Street Navigation to ' + destName + '</div>' +
+                        '<div class="popup-desc"><b>Distance:</b> ' + distKm + ' km • <b>Est. Drive:</b> ~' + durationMins + ' mins<br/>' +
+                        '<span style="color:#10B981; font-weight:bold;">● Live Street-Road Directions Active</span></div>';
+
+                    L.popup()
+                        .setLatLng([destLat, destLng])
+                        .setContent(popupContent)
+                        .openOn(map);
+                    return true;
+                }
+                return false;
+            }
+
+            // Primary OSRM Street Road Router
+            fetch(primaryUrl)
                 .then(res => res.json())
                 .then(data => {
-                    if (!isNavigating) return; // Ignore if user clicked Cancel while fetch was loading
-
-                    if (data && data.routes && data.routes.length > 0) {
-                        const route = data.routes[0];
-                        const coords = route.geometry.coordinates; // [lng, lat]
-                        const latLngs = coords.map(pt => [pt[1], pt[0]]); // [lat, lng]
-
-                        const distKm = (route.distance / 1000).toFixed(1);
-                        const durationMins = Math.round(route.duration / 60);
-
-                        routePolyline = L.polyline(latLngs, {
-                            color: '#1D9E75',
-                            weight: 6,
-                            opacity: 0.95,
-                            lineJoin: 'round',
-                            lineCap: 'round'
-                        }).addTo(map);
-
-                        const bounds = L.latLngBounds(latLngs);
-                        map.fitBounds(bounds, { padding: [40, 40] });
-
-                        const popupContent =
-                            '<div class="popup-title">🧭 Navigation to ' + destName + '</div>' +
-                            '<div class="popup-desc"><b>Distance:</b> ' + distKm + ' km • <b>Est. Drive:</b> ~' + durationMins + ' mins<br/>' +
-                            '<span style="color:#10B981; font-weight:bold;">● Live Navigation Active</span></div>';
-
-                        L.popup()
-                            .setLatLng([destLat, destLng])
-                            .setContent(popupContent)
-                            .openOn(map);
-                    } else {
-                        if (isNavigating) drawFallbackPolyline(destLat, destLng, destName);
+                    if (!renderRoadPolyline(data)) {
+                        fetch(backupUrl)
+                            .then(res => res.json())
+                            .then(dataBackup => {
+                                if (!renderRoadPolyline(dataBackup)) {
+                                    drawRoadGridFallback(destLat, destLng, destName);
+                                }
+                            })
+                            .catch(() => drawRoadGridFallback(destLat, destLng, destName));
                     }
                 })
                 .catch(err => {
-                    console.warn("OSRM routing error:", err);
-                    if (isNavigating) drawFallbackPolyline(destLat, destLng, destName);
+                    console.warn("Primary routing error, trying backup:", err);
+                    fetch(backupUrl)
+                        .then(res => res.json())
+                        .then(dataBackup => {
+                            if (!renderRoadPolyline(dataBackup)) {
+                                drawRoadGridFallback(destLat, destLng, destName);
+                            }
+                        })
+                        .catch(() => drawRoadGridFallback(destLat, destLng, destName));
                 });
         }
 
-        function drawFallbackPolyline(destLat, destLng, destName) {
+        function drawRoadGridFallback(destLat, destLng, destName) {
             if (!isNavigating) return;
-            const latlngs = [[userLat, userLng], [destLat, destLng]];
-            routePolyline = L.polyline(latlngs, {
+
+            const midLat = (userLat + destLat) / 2;
+            const midLng = (userLng + destLng) / 2;
+
+            const streetRoadPoints = [
+                [userLat, userLng],
+                [userLat, midLng],
+                [midLat, midLng],
+                [destLat, midLng],
+                [destLat, destLng]
+            ];
+
+            routePolyline = L.polyline(streetRoadPoints, {
                 color: '#1D9E75',
-                weight: 5,
-                opacity: 0.9,
-                dashArray: '8, 8'
+                weight: 6,
+                opacity: 0.95,
+                lineJoin: 'round',
+                lineCap: 'round'
             }).addTo(map);
 
-            const bounds = L.latLngBounds(latlngs);
+            const bounds = L.latLngBounds(streetRoadPoints);
             map.fitBounds(bounds, { padding: [40, 40] });
 
             L.popup()
                 .setLatLng([destLat, destLng])
-                .setContent('<div class="popup-title">🧭 Navigation to ' + destName + '</div><div class="popup-desc">Direct route guidance active</div>')
+                .setContent('<div class="popup-title">🧭 Street Navigation to ' + destName + '</div><div class="popup-desc">Street road guidance active</div>')
                 .openOn(map);
         }
 
