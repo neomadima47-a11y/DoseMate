@@ -1,6 +1,8 @@
 package com.example.data
 
 import com.example.BuildConfig
+import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.content
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -12,6 +14,12 @@ import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 object GeminiHealthClient {
+
+    // Red-flag terms that trigger an immediate local override for user safety
+    private val emergencyKeywords = listOf(
+        "chest pain", "heart attack", "stroke", "suicide",
+        "heavy bleeding", "difficulty breathing", "choking", "unconscious"
+    )
 
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(20, TimeUnit.SECONDS)
@@ -64,6 +72,14 @@ object GeminiHealthClient {
     ): Result<String> = withContext(Dispatchers.IO) {
         val geminiKey = getGeminiApiKey()
 
+        // Check Emergency Keywords first
+        val combinedText = "$problemType $classification $symptoms".lowercase()
+        if (emergencyKeywords.any { combinedText.contains(it) }) {
+            return@withContext Result.success(
+                "⚠️ EMERGENCY ALERT:\nThe symptoms you entered may require immediate medical attention. Please stop using this chat app and contact emergency services or proceed to the nearest hospital right away."
+            )
+        }
+
         val prompt = """
         You are an expert, helpful medical assistant for DoseMate (HealthBridge).
         The patient logged: $problemType ($readingValue $unit) - $classification. Notes: ${symptoms.ifBlank { "None" }}.
@@ -75,6 +91,11 @@ object GeminiHealthClient {
         """.trimIndent()
 
         if (geminiKey.isNotBlank()) {
+            val sdkResult = queryGenerativeSdk(geminiKey, "You are a helpful medical information assistant.", prompt)
+            if (!sdkResult.isNullOrBlank()) {
+                return@withContext Result.success(stripDoctorDisclaimers(sdkResult))
+            }
+
             val geminiResult = queryGemini(geminiKey, prompt)
             if (!geminiResult.isNullOrBlank()) {
                 return@withContext Result.success(stripDoctorDisclaimers(geminiResult))
@@ -101,8 +122,8 @@ object GeminiHealthClient {
     ): Result<String> = chatWithGemini(history, currentVitalsContext, language)
 
     /**
-     * Interactive conversational chatbot powered directly by Google Gemini AI API.
-     * Strictly optimized for direct, practical, straightforward medication, health, & DoseMate app answers.
+     * Interactive conversational chatbot powered directly by Official Google Generative AI SDK & Gemini API.
+     * Allows users to ask any question related to medical, health, dosages, symptoms, and treatments.
      */
     suspend fun chatWithGemini(
         history: List<ChatMessagePayload>,
@@ -111,35 +132,63 @@ object GeminiHealthClient {
     ): Result<String> = withContext(Dispatchers.IO) {
         val geminiKey = getGeminiApiKey()
 
+        val lastUserMsg = history.lastOrNull { it.role == "user" }?.content ?: ""
+        val lowercaseMessage = lastUserMsg.lowercase()
+
+        // 1. Red-flag terms check: immediate local override for user safety
+        if (emergencyKeywords.any { lowercaseMessage.contains(it) }) {
+            return@withContext Result.success(
+                "⚠️ EMERGENCY ALERT:\nThe symptoms you entered may require immediate medical attention. Please stop using this chat app and contact emergency services or proceed to the nearest hospital right away."
+            )
+        }
+
         val systemPrompt = buildString {
-            append("You are an expert, friendly, and practical medical AI assistant for DoseMate (HealthBridge), a personal community health and medication companion app in South Africa. ")
-            append("You have full knowledge about general medical, prescription, dosage, side effect, drug interaction, administration, and wellness topics, as well as the DoseMate app.\n\n")
-            append("DOSEMATE APP FEATURES AND KNOWLEDGE:\n")
-            append("• Purpose: DoseMate (HealthBridge) helps users track chronic conditions (Hypertension, Diabetes), schedule daily medications, receive exact high-priority alarm notifications, inspect calendar adherence history, and locate local health clinics in South Africa.\n")
-            append("• Medication Schedule Page: Tap '+ Add Med' to schedule prescriptions, pick 1x, 2x, 3x, or 4x daily frequency, and set exact notification alarm times for every dose.\n")
-            append("• Medication History Page: Features an interactive 7-column monthly calendar with Green ('✓ Taken') and Orange ('⏰ Not Taken') date highlights. Click any date cell to view all prescriptions taken on that date.\n")
-            append("• Clinics Page: Interactive MapTiler map with OSRM turn-by-turn road navigation and Geocoding search for hospitals and health centers in Pretoria, Johannesburg, and South Africa.\n")
-            append("• Settings Page: Profile management, South African language selection (English, isiZulu, Sesotho, Afrikaans, Sepedi, Setswana, isiXhosa), dark mode, emergency contacts, and automated Room & Firebase Cloud Firestore sync.\n\n")
-            append("STRICT RULES FOR YOUR RESPONSES:\n")
-            append("1. Answer EVERY medication or health question directly, simply, accurately, and immediately in clear plain language right at the start.\n")
-            append("2. If asked about medication dosages (e.g. Panado, Paracetamol, Ibuprofen, Metformin, Amlodipine, Lisinopril, Aspirin, etc.), give the exact standard adult dosage numbers directly (e.g. Panado: 500mg-1000mg per dose every 4-6 hours, max 4000mg/4g per 24 hours).\n")
-            append("3. Keep responses structured using 2 to 4 simple, short bullet points so they are easy to read and straightforward.\n")
-            append("4. Do NOT use generic refusal phrases or unnecessary disclaimers. Provide the direct practical answer first.\n")
-            append("5. Respond in $language.\n")
+            append("You are a helpful, expert, and highly cautious medical information assistant for DoseMate (HealthBridge). ")
+            append("Your role is to explain medical conditions, symptoms, dosages, side effects, drug interactions, and treatments in clear language.\n\n")
+            append("STRICT BOUNDARIES & GUIDELINES:\n")
+            append("1. Answer ALL medical, health, medication, symptom, dosage, and app questions asked by the user clearly, accurately, and directly.\n")
+            append("2. When asked about medication dosages (e.g. Panado, Paracetamol, Metformin, Amlodipine, Ibuprofen, Aspirin), provide the standard adult dosage numbers directly in 2 to 4 bullet points.\n")
+            append("3. If the user describes emergency symptoms (like chest pain, choking, heart attack, stroke, difficulty breathing), instruct them immediately to contact emergency services.\n")
+            append("4. Respond in $language.\n")
             if (!currentVitalsContext.isNullOrBlank()) {
-                append("Patient Context on file: $currentVitalsContext. ")
+                append("Patient Vitals Context: $currentVitalsContext. ")
             }
         }
 
         if (geminiKey.isNotBlank()) {
+            // Try official Google Generative AI SDK (gemini-1.5-flash)
+            val sdkResponse = queryGenerativeSdk(geminiKey, systemPrompt, lastUserMsg)
+            if (!sdkResponse.isNullOrBlank()) {
+                return@withContext Result.success(stripDoctorDisclaimers(sdkResponse))
+            }
+
+            // Fallback to REST endpoint
             val geminiResponse = queryGeminiWithMessages(geminiKey, systemPrompt, history)
             if (!geminiResponse.isNullOrBlank()) {
                 return@withContext Result.success(stripDoctorDisclaimers(geminiResponse))
             }
         }
 
-        val lastUserMsg = history.lastOrNull { it.role == "user" }?.content ?: ""
         Result.success(generateGeneralHealthAdviceFallback(lastUserMsg))
+    }
+
+    /**
+     * Official Google Generative AI SDK Integration (com.google.ai.client.generativeai.GenerativeModel)
+     */
+    private suspend fun queryGenerativeSdk(apiKey: String, systemPrompt: String, userMessage: String): String? {
+        return try {
+            val generativeModel = GenerativeModel(
+                modelName = "gemini-1.5-flash",
+                apiKey = apiKey,
+                systemInstruction = content {
+                    text(systemPrompt)
+                }
+            )
+            val response = generativeModel.generateContent(userMessage)
+            response.text?.trim()
+        } catch (_: Exception) {
+            null
+        }
     }
 
     /**
@@ -160,8 +209,8 @@ object GeminiHealthClient {
 
     private fun queryGemini(apiKey: String, prompt: String): String? {
         val models = listOf(
+            "gemini-1.5-flash",
             "gemini-flash-latest",
-            "gemini-3.8-flash",
             "gemini-2.5-flash-lite",
             "gemini-pro-latest"
         )
@@ -203,8 +252,8 @@ object GeminiHealthClient {
 
     private fun queryGeminiWithMessages(apiKey: String, systemPrompt: String, history: List<ChatMessagePayload>): String? {
         val models = listOf(
+            "gemini-1.5-flash",
             "gemini-flash-latest",
-            "gemini-3.8-flash",
             "gemini-2.5-flash-lite",
             "gemini-pro-latest"
         )

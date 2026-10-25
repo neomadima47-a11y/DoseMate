@@ -118,6 +118,7 @@ dependencies {
   implementation(libs.androidx.health.connect)
   // implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
+  implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
   implementation(libs.firebase.auth)
   implementation(libs.firebase.firestore)
   implementation(libs.googleid)
