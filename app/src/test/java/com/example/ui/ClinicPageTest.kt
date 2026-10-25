@@ -21,8 +21,8 @@ class ClinicPageTest {
     }
 
     @Test
-    fun test1_verifyMedicalKeywordsValidationForSearch() {
-        // Medical places MUST return true for directions
+    fun testClinicPage1_validateHospitalAndClinicKeywords() {
+        // Medical facilities MUST return true
         assertTrue(isMedicalQuery("Steve Biko Academic Hospital"))
         assertTrue(isMedicalQuery("Sunnyside Community Clinic"))
         assertTrue(isMedicalQuery("Netcare Unitas Private Hospital"))
@@ -36,7 +36,7 @@ class ClinicPageTest {
     }
 
     @Test
-    fun test2_calculateHaversineGpsDistanceToNearbyFacility() {
+    fun testClinicPage2_calculateGpsDistanceToClinic() {
         // Pretoria CBD GPS coordinates
         val userLat = -25.7479
         val userLng = 28.2293
@@ -47,12 +47,12 @@ class ClinicPageTest {
 
         val distanceKm = calculateDistanceKm(userLat, userLng, clinicLat, clinicLng)
 
-        assertTrue(distanceKm > 0.1)
-        assertTrue(distanceKm < 1.0)
+        assertTrue("Distance should be between 0.1km and 1.0km", distanceKm > 0.1)
+        assertTrue("Distance should be between 0.1km and 1.0km", distanceKm < 1.0)
     }
 
     @Test
-    fun test3_sortClinicListFromClosestToFarthest() {
+    fun testClinicPage3_sortClinicsByClosestProximity() {
         val clinics = listOf(
             ClinicEntity(id = 1, name = "Far Hospital", distanceKm = 12.5, openHours = "24/7", address = "123 Far St", phone = "+27 12 354 1000"),
             ClinicEntity(id = 2, name = "Close Clinic", distanceKm = 0.8, openHours = "24/7", address = "45 Close St", phone = "+27 12 354 1000"),
@@ -64,5 +64,23 @@ class ClinicPageTest {
         assertEquals("Close Clinic", sorted[0].name)
         assertEquals("Mid Medical", sorted[1].name)
         assertEquals("Far Hospital", sorted[2].name)
+    }
+
+    @Test
+    fun testClinicPage4_formatClinicOperatingHoursAndAddress() {
+        val clinic = ClinicEntity(
+            id = 10,
+            name = "Steve Biko Academic Hospital",
+            distanceKm = 1.2,
+            openHours = "Open 24 Hours",
+            address = "Voortrekker Rd, Pretoria",
+            phone = "+27 12 354 1000",
+            isNearest = true
+        )
+
+        assertEquals("Steve Biko Academic Hospital", clinic.name)
+        assertEquals("Open 24 Hours", clinic.openHours)
+        assertEquals("+27 12 354 1000", clinic.phone)
+        assertTrue(clinic.isNearest)
     }
 }
