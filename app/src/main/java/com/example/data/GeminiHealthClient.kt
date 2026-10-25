@@ -2,6 +2,9 @@ package com.example.data
 
 import com.example.BuildConfig
 import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.BlockThreshold
+import com.google.ai.client.generativeai.type.HarmCategory
+import com.google.ai.client.generativeai.type.SafetySetting
 import com.google.ai.client.generativeai.type.content
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -189,12 +192,11 @@ object GeminiHealthClient {
         }
 
         val systemPrompt = buildString {
-            append("You are an expert, highly knowledgeable Medical Information Assistant for DoseMate (HealthBridge). ")
-            append("Your job is to answer ANY medical, health, medication, symptom, dosage, treatment, or wellness question asked by the user in $language without topic restrictions.\n\n")
-            append("CRITICAL INSTRUCTIONS:\n")
-            append("1. Answer ANY question asked by the user clearly, accurately, and directly.\n")
-            append("2. Break down responses into: Overview, Common Symptoms/Causes, and Typical Treatments & Dosages.\n")
-            append("3. Never refuse to answer or output generic 'call your doctor' statements. Provide direct, useful, practical educational answers for any health topic requested.\n")
+            append("You are an all-purpose medical and wellness assistant for DoseMate (HealthBridge) with deep expertise in health, wellness, medications, symptoms, and lifestyle habits.\n\n")
+            append("INSTRUCTIONS:\n")
+            append("1. You must answer ANY general, casual, technical, medical, health, medication, or lifestyle question the user asks directly in $language.\n")
+            append("2. When answering health or lifestyle questions (diet, nutrition, workouts, sleep, pain, stress), provide actionable, science-backed advice in 2 to 4 bullet points.\n")
+            append("3. Never refuse to answer or output generic 'call your doctor' statements.\n")
             append("4. If symptoms describe a life-threatening emergency (like chest pain, choking, severe bleeding), instruct them immediately to visit emergency services.\n")
             if (!currentVitalsContext.isNullOrBlank()) {
                 append("Patient Vitals Context: $currentVitalsContext. ")
@@ -202,7 +204,7 @@ object GeminiHealthClient {
         }
 
         if (geminiKey.isNotBlank()) {
-            // Try official Google Generative AI SDK (gemini-1.5-flash)
+            // Try official Google Generative AI SDK (gemini-1.5-flash) with custom SafetySettings
             val sdkResponse = queryGenerativeSdk(geminiKey, systemPrompt, groundedPrompt)
             if (!sdkResponse.isNullOrBlank()) {
                 return@withContext Result.success(stripDoctorDisclaimers(sdkResponse))
@@ -220,12 +222,20 @@ object GeminiHealthClient {
 
     /**
      * Official Google Generative AI SDK Integration (com.google.ai.client.generativeai.GenerativeModel)
+     * Configured with BlockThreshold.NONE for dangerous content so lifestyle & health questions are never blocked.
      */
     private suspend fun queryGenerativeSdk(apiKey: String, systemPrompt: String, userMessage: String): String? {
         return try {
+            val safetySettings = listOf(
+                SafetySetting(HarmCategory.HATE_SPEECH, BlockThreshold.ONLY_HIGH),
+                SafetySetting(HarmCategory.HARASSMENT, BlockThreshold.ONLY_HIGH),
+                SafetySetting(HarmCategory.DANGEROUS_CONTENT, BlockThreshold.NONE)
+            )
+
             val generativeModel = GenerativeModel(
                 modelName = "gemini-1.5-flash",
                 apiKey = apiKey,
+                safetySettings = safetySettings,
                 systemInstruction = content {
                     text(systemPrompt)
                 }
