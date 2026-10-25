@@ -405,7 +405,7 @@ class XmlUiController(
         // Professional Sign In & Registration validation
         btnPrimary?.setOnClickListener {
             val email = etEmail?.text?.toString()?.trim() ?: ""
-            val pin = etPin?.text?.toString()?.trim() ?: ""
+            val password = etPin?.text?.toString()?.trim() ?: ""
             val selectedLang = spinnerLang?.selectedItem?.toString() ?: "English"
 
             if (email.isBlank() || !email.contains("@") || !email.contains(".")) {
@@ -413,8 +413,8 @@ class XmlUiController(
                 etEmail?.requestFocus()
                 return@setOnClickListener
             }
-            if (pin.isBlank()) {
-                Toast.makeText(activity, "Please enter your PIN / password", Toast.LENGTH_SHORT).show()
+            if (password.isBlank()) {
+                Toast.makeText(activity, "Please enter your password", Toast.LENGTH_SHORT).show()
                 etPin?.requestFocus()
                 return@setOnClickListener
             }
@@ -426,32 +426,23 @@ class XmlUiController(
                     etName?.requestFocus()
                     return@setOnClickListener
                 }
-                if (pin.length < 4) {
-                    Toast.makeText(activity, "PIN must be at least 4 digits", Toast.LENGTH_SHORT).show()
-                    etPin?.requestFocus()
-                    return@setOnClickListener
-                }
-                viewModel.register(email, inputName, selectedLang, pin)
+                viewModel.register(email, inputName, selectedLang, password)
                 Toast.makeText(activity, "Account created! Welcome, $inputName!", Toast.LENGTH_SHORT).show()
                 showScreen(0)
             } else {
                 val session = viewModel.userSession.value
-                if (session != null && session.email.isNotBlank() && session.email.equals(email, ignoreCase = true)) {
-                    if (session.securityPin.isNotBlank() && session.securityPin != pin) {
-                        Toast.makeText(activity, "Incorrect PIN. Tap 'Forgot PIN / Password?' to reset.", Toast.LENGTH_LONG).show()
-                        etPin?.requestFocus()
-                        return@setOnClickListener
-                    }
-                }
-
-                val name = if (session != null && session.email.equals(email, ignoreCase = true) && session.fullName.isNotBlank()) {
+                val derivedName = if (session != null && session.email.equals(email, ignoreCase = true) && session.fullName.isNotBlank()) {
                     session.fullName
                 } else {
                     email.substringBefore('@').replace('.', ' ').replace('_', ' ')
+                        .split(' ')
+                        .joinToString(" ") { p ->
+                            p.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.ROOT) else it.toString() }
+                        }
                 }
 
-                viewModel.login(email, name, selectedLang, pin)
-                Toast.makeText(activity, "Welcome back, $name!", Toast.LENGTH_SHORT).show()
+                viewModel.login(email, derivedName, selectedLang, password)
+                Toast.makeText(activity, "Welcome back, $derivedName!", Toast.LENGTH_SHORT).show()
                 showScreen(0)
             }
         }
