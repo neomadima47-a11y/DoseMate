@@ -11,7 +11,7 @@ import org.junit.Test
 class MedicationSystemTest {
 
     @Test
-    fun test1_recordTakenTimestampWhenDoseMarkedTaken() {
+    fun testNotificationSystem1_recordTakenTimestampWhenDoseMarked() {
         val pendingDose = DoseLogEntity(
             id = 5,
             medicationId = 50,
@@ -30,7 +30,7 @@ class MedicationSystemTest {
     }
 
     @Test
-    fun test2_skipDuplicateNotificationIfDoseTakenToday() {
+    fun testNotificationSystem2_skipDuplicateNotificationIfDoseTakenToday() {
         val logs = listOf(
             DoseLogEntity(
                 id = 1,
@@ -55,7 +55,7 @@ class MedicationSystemTest {
     }
 
     @Test
-    fun test3_triggerHighPriorityAlertForPendingDose() {
+    fun testNotificationSystem3_triggerHighPriorityAlertForPendingDose() {
         val logs = listOf(
             DoseLogEntity(
                 id = 2,
@@ -80,7 +80,7 @@ class MedicationSystemTest {
     }
 
     @Test
-    fun test4_cancelScheduledAlarmsWhenMedicationEnded() {
+    fun testNotificationSystem4_cancelScheduledAlarmsWhenMedicationEnded() {
         val medications = listOf(
             MedicationEntity(id = 1, name = "Panado", dosage = "500mg", frequency = "Twice daily", reminderTimes = "8:00 AM", status = "Active"),
             MedicationEntity(id = 2, name = "Amlodipine", dosage = "5mg", frequency = "Once daily", reminderTimes = "6:00 PM", status = "Ended")
@@ -93,7 +93,7 @@ class MedicationSystemTest {
     }
 
     @Test
-    fun test5_stripDoctorDisclaimersFromAiResponseText() {
+    fun testNotificationSystem5_stripDoctorDisclaimersFromAiResponseText() {
         val rawAiText = "Take Panado 500mg every 4-6 hours. Please consult your doctor for further guidance."
         val disclaimerPattern = Regex("(?i)please (consult|talk to|see|contact) (your|a) (doctor|physician|healthcare provider|pharmacist)[^.\\n]*[.\\n]?")
         val cleaned = rawAiText.replace(disclaimerPattern, "").trim()
