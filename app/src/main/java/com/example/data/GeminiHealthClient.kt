@@ -37,6 +37,41 @@ object GeminiHealthClient {
     }
 
     /**
+     * Local reference database to ground the AI's answers with verified medical clinical data
+     */
+    private fun getVerifiedMedicalContext(userQuery: String): String {
+        val query = userQuery.lowercase()
+        return when {
+            query.contains("diabetes") || query.contains("sugar") || query.contains("glucose") || query.contains("metformin") -> {
+                "Context: Diabetes occurs when blood glucose is too high. Type 1 is autoimmune (no insulin production). " +
+                "Type 2 is lifestyle/genetic (insulin resistance). Common symptoms include increased thirst, frequent urination, " +
+                "and fatigue. Management involves glucose tracking, metformin (500mg-1000mg with meals), insulin therapy, diet, and exercise."
+            }
+            query.contains("hypertension") || query.contains("blood pressure") || query.contains("amlodipine") || query.contains("lisinopril") -> {
+                "Context: Hypertension (high blood pressure) is often a silent condition with few visible symptoms. " +
+                "Long-term risks include heart attack, stroke, and kidney damage. Standard treatments include lifestyle changes " +
+                "(low-sodium diet, exercise) and medications like ACE inhibitors, beta-blockers, or calcium channel blockers (Amlodipine 5mg/10mg daily)."
+            }
+            query.contains("asthma") || query.contains("wheez") || query.contains("inhaler") -> {
+                "Context: Asthma is a chronic condition causing inflammation and narrowing of the airways. " +
+                "Symptoms include wheezing, shortness of breath, chest tightness, and coughing. Triggers include allergens, cold air, " +
+                "and exercise. Managed using quick-relief rescue inhalers (albuterol) and long-term control inhalers (corticosteroids)."
+            }
+            query.contains("headache") || query.contains("panado") || query.contains("paracetamol") || query.contains("fever") -> {
+                "Context: Panado / Paracetamol is a first-line analgesic and antipyretic. " +
+                "Standard adult dosage: 500mg to 1,000mg (1 or 2 tablets of 500mg) every 4 to 6 hours as needed. " +
+                "Maximum daily limit is 4,000mg (4 grams / 8 tablets) per 24 hours. Always drink water."
+            }
+            query.contains("ibuprofen") || query.contains("inflammation") || query.contains("pain") -> {
+                "Context: Ibuprofen is a nonsteroidal anti-inflammatory drug (NSAID). " +
+                "Standard adult dosage is 200mg to 400mg every 6 to 8 hours with food or milk to protect stomach lining. " +
+                "Do not exceed 1,200mg daily without doctor supervision."
+            }
+            else -> ""
+        }
+    }
+
+    /**
      * Helper to clean any residual doctor disclaimer phrases from AI text
      */
     private fun stripDoctorDisclaimers(text: String): String {
@@ -142,14 +177,25 @@ object GeminiHealthClient {
             )
         }
 
+        val cleanQuery = lastUserMsg.trim()
+        val verifiedContext = getVerifiedMedicalContext(cleanQuery)
+
+        val groundedPrompt = if (verifiedContext.isNotEmpty()) {
+            "Use the following verified clinical data to answer the user's query clearly, directly, and professionally in 2 to 4 bullet points in $language.\n" +
+            "$verifiedContext\n\n" +
+            "User Query: $cleanQuery"
+        } else {
+            "Provide general educational medical information regarding the following query clearly and directly in 2 to 4 bullet points in $language: $cleanQuery"
+        }
+
         val systemPrompt = buildString {
-            append("You are a helpful, expert, and highly cautious medical information assistant for DoseMate (HealthBridge). ")
-            append("Your role is to explain medical conditions, symptoms, dosages, side effects, drug interactions, and treatments in clear language.\n\n")
-            append("STRICT BOUNDARIES & GUIDELINES:\n")
+            append("You are an expert, highly knowledgeable Medical Information Assistant for DoseMate (HealthBridge). ")
+            append("Your job is to answer user queries by explaining conditions, causes, symptoms, dosages, and standard treatments in $language.\n\n")
+            append("CRITICAL INSTRUCTIONS:\n")
             append("1. Answer ALL medical, health, medication, symptom, dosage, and app questions asked by the user clearly, accurately, and directly.\n")
-            append("2. When asked about medication dosages (e.g. Panado, Paracetamol, Metformin, Amlodipine, Ibuprofen, Aspirin), provide the standard adult dosage numbers directly in 2 to 4 bullet points.\n")
-            append("3. If the user describes emergency symptoms (like chest pain, choking, heart attack, stroke, difficulty breathing), instruct them immediately to contact emergency services.\n")
-            append("4. Respond in $language.\n")
+            append("2. Break down responses into: Overview, Common Symptoms/Causes, and Typical Treatments & Dosages.\n")
+            append("3. Never refuse to answer or give generic 'call your doctor' statements. Provide direct, useful, practical educational answers.\n")
+            append("4. If symptoms describe a life-threatening emergency (like chest pain, choking, severe bleeding), instruct them immediately to visit emergency services.\n")
             if (!currentVitalsContext.isNullOrBlank()) {
                 append("Patient Vitals Context: $currentVitalsContext. ")
             }
@@ -157,7 +203,7 @@ object GeminiHealthClient {
 
         if (geminiKey.isNotBlank()) {
             // Try official Google Generative AI SDK (gemini-1.5-flash)
-            val sdkResponse = queryGenerativeSdk(geminiKey, systemPrompt, lastUserMsg)
+            val sdkResponse = queryGenerativeSdk(geminiKey, systemPrompt, groundedPrompt)
             if (!sdkResponse.isNullOrBlank()) {
                 return@withContext Result.success(stripDoctorDisclaimers(sdkResponse))
             }
@@ -169,7 +215,7 @@ object GeminiHealthClient {
             }
         }
 
-        Result.success(generateGeneralHealthAdviceFallback(lastUserMsg))
+        Result.success(generateGeneralHealthAdviceFallback(cleanQuery))
     }
 
     /**
