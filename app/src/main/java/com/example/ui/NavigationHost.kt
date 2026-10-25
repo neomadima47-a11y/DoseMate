@@ -61,12 +61,11 @@ fun MainAppLayout(
     val healthConnectStatus by viewModel.healthConnectStatus.collectAsState()
     val healthConnectSyncMsg by viewModel.healthConnectSyncMsg.collectAsState()
 
-    val isLoggedIn = userSession?.isLoggedIn ?: true
     val currentLanguage = userSession?.preferredLanguage ?: "English"
 
-    var currentScreen by remember { mutableStateOf(if (isLoggedIn) ScreenRoute.DASHBOARD else ScreenRoute.AUTH) }
+    var currentScreen by remember { mutableStateOf(ScreenRoute.DASHBOARD) }
 
-    if (!isLoggedIn || currentScreen == ScreenRoute.AUTH) {
+    if (currentScreen == ScreenRoute.AUTH) {
         AuthScreen(
             currentLanguage = currentLanguage,
             onLoginSuccess = { email, name, language ->

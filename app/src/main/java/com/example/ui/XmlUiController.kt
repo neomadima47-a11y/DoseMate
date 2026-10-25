@@ -100,9 +100,7 @@ class XmlUiController(
 
         scope.launch {
             viewModel.userSession.collectLatest { session ->
-                if (session != null && !session.isLoggedIn) {
-                    showScreen(-1) // Show Auth ONLY if explicitly logged out
-                } else if (session != null && session.isLoggedIn && activeNavIndex == -1) {
+                if (session != null && session.isLoggedIn && activeNavIndex == -1) {
                     showScreen(0) // Show Dashboard once logged in
                 }
                 if (session != null) {

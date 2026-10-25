@@ -19,7 +19,7 @@ class HealthBridgeRepository(
     val clinics: Flow<List<ClinicEntity>> = clinicDao.getAllClinics()
 
     suspend fun initializeDefaultDataIfEmpty() {
-        // Initialize Default User Session
+        // Initialize Default User Session (Always keep logged in)
         val currentUser = userDao.getUserSession().first()
         if (currentUser == null) {
             userDao.insertOrUpdateUser(
@@ -30,6 +30,8 @@ class HealthBridgeRepository(
                     isLoggedIn = true
                 )
             )
+        } else if (!currentUser.isLoggedIn) {
+            userDao.insertOrUpdateUser(currentUser.copy(isLoggedIn = true))
         }
 
         // Default Medications Auto-Insertion Disabled:
