@@ -62,9 +62,9 @@ object MedicationNotificationHelper {
 
         val notificationId = (medicationId * 1000 + scheduledTime.hashCode() % 1000).toInt().coerceAtLeast(1)
 
-        // Open app intent
+        // Open app intent (SINGLE_TOP prevents activity destruction/logout when tapped)
         val openAppIntent = Intent(context, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             putExtra("navigate_to", "medications")
         }
         val openAppPendingIntent = PendingIntent.getActivity(

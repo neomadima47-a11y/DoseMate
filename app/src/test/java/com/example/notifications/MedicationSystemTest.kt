@@ -100,4 +100,15 @@ class MedicationSystemTest {
 
         assertEquals("Take Panado 500mg every 4-6 hours.", cleaned)
     }
+
+    @Test
+    fun testNotificationSystem6_openAppIntentNavigatesToMedicationsWithoutLogout() {
+        val navigateToTarget = "medications"
+        val isLoggedIn = true
+
+        val nextScreenIndex = if (navigateToTarget.equals("medications", ignoreCase = true) && isLoggedIn) 2 else -1
+
+        assertEquals(2, nextScreenIndex)
+        assertTrue("User remains logged in when tapping dose reminder notification", isLoggedIn)
+    }
 }

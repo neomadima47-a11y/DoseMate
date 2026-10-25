@@ -33,6 +33,20 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         requestNotificationAndAlarmPermissions()
         renderEngine()
+        handleNotificationNavigation(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleNotificationNavigation(intent)
+    }
+
+    private fun handleNotificationNavigation(intent: Intent?) {
+        val navigateTo = intent?.getStringExtra("navigate_to")
+        if (navigateTo == "medications") {
+            xmlController?.showScreen(2)
+        }
     }
 
     private fun requestNotificationAndAlarmPermissions() {
