@@ -227,8 +227,6 @@ class XmlUiController(
         val btnPrimary = view.findViewById<Button>(R.id.btn_auth_primary)
         val btnGoogle = view.findViewById<View>(R.id.btn_auth_google)
         val tvGoogleLabel = view.findViewById<TextView>(R.id.tv_auth_google_label)
-        val btnReturnDashboard = view.findViewById<Button>(R.id.btn_auth_return_dashboard)
-
         var isRegister = false
 
         // Setup Language Spinner
@@ -258,7 +256,7 @@ class XmlUiController(
                 tabSignIn?.setBackgroundResource(0)
                 tabSignIn?.setTextColor(android.graphics.Color.parseColor("#9CA3AF"))
                 layoutName?.visibility = View.VISIBLE
-                btnPrimary?.text = "Create HealthBridge Account"
+                btnPrimary?.text = "Create DoseMate Account"
                 tvGoogleLabel?.text = "Sign up with Google"
             } else {
                 tabSignIn?.setBackgroundResource(R.drawable.bg_tab_selected)
@@ -266,7 +264,7 @@ class XmlUiController(
                 tabRegister?.setBackgroundResource(0)
                 tabRegister?.setTextColor(android.graphics.Color.parseColor("#9CA3AF"))
                 layoutName?.visibility = View.GONE
-                btnPrimary?.text = "Sign In to HealthBridge"
+                btnPrimary?.text = "Sign In to DoseMate"
                 tvGoogleLabel?.text = "Sign in with Google"
             }
         }
@@ -279,10 +277,6 @@ class XmlUiController(
         tabRegister?.setOnClickListener {
             isRegister = true
             updateTabs()
-        }
-
-        btnReturnDashboard?.setOnClickListener {
-            showScreen(0)
         }
 
         // Google Sign-In Chooser Dialog

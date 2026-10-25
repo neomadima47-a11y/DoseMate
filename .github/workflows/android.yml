@@ -93,7 +93,14 @@ jobs:
           echo "=========================================="
           ./gradlew testDebugUnitTest --tests "com.example.ui.MedicationsPageRequirementsTest" --info
 
-      - name: "🧪 Page 5: Core Framework Integration Suite"
+      - name: "🔒 Page 5: Authentication & Professional Login Validation"
+        run: |
+          echo "=========================================="
+          echo "🔒 RUNNING: Authentication & Professional Login Validation"
+          echo "=========================================="
+          ./gradlew testDebugUnitTest --tests "com.example.ui.AuthPageRequirementsTest" --info
+
+      - name: "🧪 Page 6: Core Framework Integration Suite"
         run: |
           echo "=========================================="
           echo "🧪 RUNNING: Core Framework Integration Suite"
@@ -158,10 +165,11 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📊 Pipeline Jobs Status" >> $GITHUB_STEP_SUMMARY
           echo "- **Job 1: Environment Setup**: ✅ Completed" >> $GITHUB_STEP_SUMMARY
-          echo "- **Job 2: Unit Test Suite**: ✅ Passed All 19 Unit Tests" >> $GITHUB_STEP_SUMMARY
-          echo "  - Clinic Search Tests: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
-          echo "  - Google Maps Navigation Tests: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Job 2: Unit Test Suite**: ✅ Passed All 22 Unit Tests" >> $GITHUB_STEP_SUMMARY
+          echo "  - Clinic Search Tests: ✅ Passed (4/4)" >> $GITHUB_STEP_SUMMARY
+          echo "  - Google Maps Navigation Tests: ✅ Passed (4/4)" >> $GITHUB_STEP_SUMMARY
           echo "  - Medication System Tests: ✅ Passed (5/5)" >> $GITHUB_STEP_SUMMARY
           echo "  - Medication Requirements Tests: ✅ Passed (5/5)" >> $GITHUB_STEP_SUMMARY
+          echo "  - Authentication & Login Tests: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
           echo "- **Job 3: APK Assembly**: ✅ Built \`app-debug.apk\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Job 4: Results Summary**: ✅ Published Summary" >> $GITHUB_STEP_SUMMARY

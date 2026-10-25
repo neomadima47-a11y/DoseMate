@@ -35,8 +35,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="HealthBridge"
-            android:textSize="26sp"
+            android:text="DoseMate"
+            android:textSize="28sp"
             android:textStyle="bold"
             android:textColor="@color/text_primary" />
 
@@ -45,7 +45,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="South Africa Community Health &amp; Medication Companion"
+            android:text="Secure Medical Access &amp; Prescription Companion"
             android:textSize="13sp"
             android:textColor="@color/text_secondary"
             android:gravity="center" />
@@ -196,7 +196,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="4-Digit Security PIN / Password"
+                        android:text="Password / PIN"
                         android:textSize="12sp"
                         android:textStyle="bold"
                         android:textColor="@color/text_secondary" />
@@ -207,7 +207,7 @@
                         android:layout_height="wrap_content"
                         android:clickable="true"
                         android:focusable="true"
-                        android:text="Forgot PIN / Password?"
+                        android:text="Forgot Password?"
                         android:textColor="@color/teal_accent"
                         android:textSize="11sp"
                         android:textStyle="bold" />
@@ -219,13 +219,12 @@
                     android:layout_height="48dp"
                     android:layout_marginTop="6dp"
                     android:background="@drawable/bg_edit_text"
-                    android:hint="••••"
+                    android:hint="••••••••"
                     android:textColorHint="@color/text_muted"
                     android:textColor="@color/text_primary"
                     android:textSize="14sp"
                     android:paddingHorizontal="14dp"
-                    android:inputType="numberPassword"
-                    android:maxLength="8" />
+                    android:inputType="textPassword" />
             </LinearLayout>
 
             <!-- Primary Action Button -->
@@ -234,7 +233,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:layout_marginTop="20dp"
-                android:text="Sign In to HealthBridge"
+                android:text="Sign In to DoseMate"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:textColor="@color/white"
@@ -244,8 +243,8 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:layout_marginBottom="16dp"
+                android:layout_marginTop="18dp"
+                android:layout_marginBottom="18dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -298,17 +297,6 @@
                     android:textSize="14sp"
                     android:textStyle="bold" />
             </LinearLayout>
-
-            <!-- Optional Return to Dashboard -->
-            <Button
-                android:id="@+id/btn_auth_return_dashboard"
-                android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:layout_marginTop="12dp"
-                android:text="← Return to Dashboard"
-                android:textSize="12sp"
-                android:textColor="@color/text_secondary"
-                android:background="@android:color/transparent" />
 
         </LinearLayout>
 
