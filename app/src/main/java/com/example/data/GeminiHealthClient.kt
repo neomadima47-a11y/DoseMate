@@ -158,7 +158,7 @@ object GeminiHealthClient {
 
     /**
      * Interactive conversational chatbot powered directly by Official Google Generative AI SDK & Gemini API.
-     * Allows users to ask any question related to medical, health, dosages, symptoms, and treatments.
+     * Unrestricted to answer ANY medical, health, dosage, symptom, treatment, or wellness question asked by the user.
      */
     suspend fun chatWithGemini(
         history: List<ChatMessagePayload>,
@@ -190,11 +190,11 @@ object GeminiHealthClient {
 
         val systemPrompt = buildString {
             append("You are an expert, highly knowledgeable Medical Information Assistant for DoseMate (HealthBridge). ")
-            append("Your job is to answer user queries by explaining conditions, causes, symptoms, dosages, and standard treatments in $language.\n\n")
+            append("Your job is to answer ANY medical, health, medication, symptom, dosage, treatment, or wellness question asked by the user in $language without topic restrictions.\n\n")
             append("CRITICAL INSTRUCTIONS:\n")
-            append("1. Answer ALL medical, health, medication, symptom, dosage, and app questions asked by the user clearly, accurately, and directly.\n")
+            append("1. Answer ANY question asked by the user clearly, accurately, and directly.\n")
             append("2. Break down responses into: Overview, Common Symptoms/Causes, and Typical Treatments & Dosages.\n")
-            append("3. Never refuse to answer or give generic 'call your doctor' statements. Provide direct, useful, practical educational answers.\n")
+            append("3. Never refuse to answer or output generic 'call your doctor' statements. Provide direct, useful, practical educational answers for any health topic requested.\n")
             append("4. If symptoms describe a life-threatening emergency (like chest pain, choking, severe bleeding), instruct them immediately to visit emergency services.\n")
             if (!currentVitalsContext.isNullOrBlank()) {
                 append("Patient Vitals Context: $currentVitalsContext. ")
@@ -362,6 +362,31 @@ object GeminiHealthClient {
                 "• **Calendar History**: Inspect your daily taken medications on the interactive calendar highlighted in Green (`✓ Taken`) or Orange (`⏰ Not Taken`).\n" +
                 "• **Clinics & Directions**: Locate healthcare centers in South Africa with turn-by-turn road navigation."
 
+            lower.contains("skin") || lower.contains("rash") || lower.contains("itch") || lower.contains("eczema") ->
+                "🩺 **Skin Care & Rash Guidance**:\n\n" +
+                "• **Overview**: Skin irritation or rashes can result from allergies, eczema, or contact dermatitis.\n" +
+                "• **Management**: Wash gently with mild fragrance-free soap, keep skin hydrated, and apply over-the-counter hydrocortisone cream if itchy."
+
+            lower.contains("stomach") || lower.contains("nausea") || lower.contains("acid") || lower.contains("ulcer") ->
+                "🩺 **Stomach & Digestive Care Guidance**:\n\n" +
+                "• **Overview**: Stomach discomfort or acid reflux can stem from diet, gastritis, or digestion.\n" +
+                "• **Management**: Drink warm water or antacids (such as Gaviscon), eat small frequent meals, and avoid spicy foods."
+
+            lower.contains("eye") || lower.contains("vision") ->
+                "🩺 **Eye Health Guidance**:\n\n" +
+                "• **Overview**: Eye irritation can be caused by dry eyes, strain, or conjunctivitis.\n" +
+                "• **Management**: Use lubricating eye drops, rest your eyes from digital screens, and avoid rubbing."
+
+            lower.contains("cough") || lower.contains("flu") || lower.contains("cold") || lower.contains("fever") ->
+                "🩺 **Cold, Cough & Fever Guidance**:\n\n" +
+                "• **Overview**: Viral upper respiratory infections cause fever, sore throat, and cough.\n" +
+                "• **Management**: Rest, stay hydrated with fluids, and take Panado 500mg every 4-6 hours for fever relief."
+
+            lower.contains("vitamin") || lower.contains("supplement") ->
+                "💊 **Vitamins & Supplements Guidance**:\n\n" +
+                "• **Overview**: Essential vitamins support immunity, bone density, and energy levels.\n" +
+                "• **Recommendation**: Take Vitamin D 1000 IU daily and Vitamin C 500mg with meals."
+
             lower.contains("headache") || lower.contains("panado") || lower.contains("paracetamol") ->
                 "💊 **Panado / Headache Direct Answer**:\n\n" +
                 "• **What to take**: Panado (Paracetamol 500mg) or Ibuprofen 400mg with a full glass of water.\n" +
@@ -380,23 +405,10 @@ object GeminiHealthClient {
                 "• **How to take**: Take once daily with water at the same time every day.\n" +
                 "• **Precaution**: Avoid taking Ibuprofen concurrently if on blood pressure medication."
 
-            lower.contains("miss") || lower.contains("forget") || lower.contains("forgot") ->
-                "⏰ **Missed Dose Quick Answer**:\n\n" +
-                "• Take the missed dose as soon as you remember.\n" +
-                "• If it's almost time for your next dose, skip the missed one. Never double up doses."
-
-            lower.contains("ibuprofen") || lower.contains("pain") ->
-                "💊 **Ibuprofen Quick Answer**:\n\n" +
-                "• **Dosage**: Standard adult dose is 200mg to 400mg every 6 to 8 hours.\n" +
-                "• **How to take**: Always take with food or milk to protect your stomach."
-
-            lower.contains("water") || lower.contains("hydrat") ->
-                "💧 **Hydration Target**: Drink 2 to 2.5 liters of water daily to support circulation and kidney health."
-
             else ->
                 "🩺 **DoseMate AI Health Guidance**:\n\n" +
-                "• **App Purpose**: DoseMate manages your daily medication schedule, calendar history, and local clinic directions.\n" +
-                "• **Medication Dosage**: Take Panado 500mg - 1000mg per dose (max 4000mg daily) with water."
+                "• **Overview**: $question.\n" +
+                "• **Practical Step**: Drink water, rest, and follow recommended health guidelines for symptom relief."
         }
     }
 
