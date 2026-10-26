@@ -344,7 +344,26 @@ object Strings {
             "Sign in with Google" to mapOf("isiZulu" to "Qhubeka nge-Google", "Sesotho" to "Tswela pele ka Google", "Afrikaans" to "Gaan voort met Google", "Sepedi" to "Tswela pele ka Google", "Setswana" to "Tswelela ka Google", "isiXhosa" to "Qhubeka nge-Google"),
             "All Doses" to mapOf("isiZulu" to "Yonke Imithi", "Sesotho" to "Meriana Ka Moka", "Afrikaans" to "Alle Dosisse", "Sepedi" to "Dihlare Ka Moka", "Setswana" to "Meriana Yotlhe", "isiXhosa" to "Yonge Amiyeza"),
             "Due Today" to mapOf("isiZulu" to "Efanele Namuhla", "Sesotho" to "E tswanelang Kajeno", "Afrikaans" to "Vandag Verskuldig", "Sepedi" to "Mohlaleng wa Lehono", "Setswana" to "E e tshwanetseng Gompieno", "isiXhosa" to "Efanelayo Wanamhla"),
-            "Completed" to mapOf("isiZulu" to "Iqediwe", "Sesotho" to "E qetilwe", "Afrikaans" to "Voltooi", "Sepedi" to "E feditswe", "Setswana" to "E feditswe", "isiXhosa" to "Iqukunjelwe")
+            "Completed" to mapOf("isiZulu" to "Iqediwe", "Sesotho" to "E qetilwe", "Afrikaans" to "Voltooi", "Sepedi" to "E feditswe", "Setswana" to "E feditswe", "isiXhosa" to "Iqukunjelwe"),
+            "Prescription Regimen" to mapOf("isiZulu" to "Uhlelo Lwemithi", "Sesotho" to "Mekgwa ya Meriana", "Afrikaans" to "Medikasie Skedule", "Sepedi" to "Dithulaganyo tsa Dihlare", "Setswana" to "Mekgwa ya Meriana", "isiXhosa" to "Inqubo Yemiyeza"),
+            "Today's Medications" to mapOf("isiZulu" to "Imithi Yanamuhla", "Sesotho" to "Meriana ya Kajeno", "Afrikaans" to "Vandag se Medikasie", "Sepedi" to "Dihlare tsa Lehono", "Setswana" to "Meriana ya Gompieno", "isiXhosa" to "Amiyeza Wanamhla"),
+            "Health Summary" to mapOf("isiZulu" to "Isifinyezo Sempilo", "Sesotho" to "Kgutshwfalo ya Bophelo", "Afrikaans" to "Gesondheidsopsomming", "Sepedi" to "Kakaretso ya Bophelo", "Setswana" to "Tshobokanyo ya Botsogo", "isiXhosa" to "Isishwankathelo Sempilo"),
+            "Recent Health Log" to mapOf("isiZulu" to "Ilogi Yempilo Yakamuva", "Sesotho" to "Buka ya Bophelo e Ntjha", "Afrikaans" to "Onlangse Gesondheidslogboek", "Sepedi" to "Puku ya Bophelo ya Bjale", "Setswana" to "Pekano ya Botsogo ya Sesweng", "isiXhosa" to "Ilogi Yempilo Yamva"),
+            "Adherence Tracker" to mapOf("isiZulu" to "Umlandeli Wokuthatha Imithi", "Sesotho" to "Mohetsi wa ho Nka Moriana", "Afrikaans" to "Nakomingspoorder", "Sepedi" to "Molatedi wa go Tsea Sehlare", "Setswana" to "Molateli wa go Tsea Molemo", "isiXhosa" to "Umkhokheli Wokuthatha Amiyeza"),
+            "Log Vitals" to mapOf("isiZulu" to "Bhalisa Isilinganiso", "Sesotho" to "Nka Sekala", "Afrikaans" to "Teken Lesing Aan", "Sepedi" to "Gatisa Sekala", "Setswana" to "Kwala Sekale", "isiXhosa" to "Bhala Umlinganiselo"),
+            "Consult AI" to mapOf("isiZulu" to "Thintana ne-AI", "Sesotho" to "Buisana le AI", "Afrikaans" to "Raadpleeg KAI", "Sepedi" to "Rera le AI", "Setswana" to "Ikgokaganye le AI", "isiXhosa" to "Dibana ne-AI"),
+            "Daily Dosage Regimen" to mapOf("isiZulu" to "Izilinganiso Zansuku Zonke", "Sesotho" to "Tekanyo ya Letsatsi le Letsatsi", "Afrikaans" to "Daaglikse Dosis Skedule", "Sepedi" to "Tekanyo ya Tšatši le Tšatši", "Setswana" to "Tekanyo ya Tsatsi le Tsatsi", "isiXhosa" to "Iskali Semiaxesha Yonke"),
+            "Add Medication" to mapOf("isiZulu" to "Faka Umuthi", "Sesotho" to "Otsa Moriana", "Afrikaans" to "Voeg Medikasie By", "Sepedi" to "Tsenya Sehlare", "Setswana" to "Tsenya Molemo", "isiXhosa" to "Faka Umyeza"),
+            "Take Dose" to mapOf("isiZulu" to "Thatha Umuthi", "Sesotho" to "Nka Moriana", "Afrikaans" to "Neem Dosis", "Sepedi" to "Tsea Sehlare", "Setswana" to "Tsea Molemo", "isiXhosa" to "Thatha Umyeza"),
+            "Mark Taken" to mapOf("isiZulu" to "Faka Uphawu Lokuthi Uthathiwe", "Sesotho" to "Tshwaya Hore e Tserwe", "Afrikaans" to "Merk as Genoom", "Sepedi" to "Lswaya Gore e Tserwe", "Setswana" to "Tshwaya Gore e Tserwe", "isiXhosa" to "Beka Uphawu Lokuba Ithathwe"),
+            "Find a clinic" to mapOf("isiZulu" to "Thola ikliniki", "Sesotho" to "Batla tleliniki", "Afrikaans" to "Vind kliniek", "Sepedi" to "Seka tleleniki", "Setswana" to "Batla tleliniki", "isiXhosa" to "Fumana ikliniki"),
+            "Hospitals" to mapOf("isiZulu" to "Izibhedlela", "Sesotho" to "Dipetlele", "Afrikaans" to "Hospitale", "Sepedi" to "Dipetlele", "Setswana" to "Dipatela", "isiXhosa" to "Izibhedlele"),
+            "Public Clinics" to mapOf("isiZulu" to "Amakliniki Omphakathi", "Sesotho" to "Ditleliniki tsa Sechaba", "Afrikaans" to "Publieke Klinieke", "Sepedi" to "Ditleleniki tsa Setšhaba", "Setswana" to "Ditleleniki tsa Setšhaba", "isiXhosa" to "Amakliniki Omphakathi"),
+            "Private Hospitals" to mapOf("isiZulu" to "Izibhedlela Ezizimele", "Sesotho" to "Dipetlele tseo e seng tsa Mmuso", "Afrikaans" to "Private Hospitale", "Sepedi" to "Dipetlele tša Phraevete", "Setswana" to "Dipatela tsa Poraefete", "isiXhosa" to "Izibhedlele Ezizimeleyo"),
+            "Pharmacies" to mapOf("isiZulu" to "Amakhemisi", "Sesotho" to "Likhemisi", "Afrikaans" to "Apteke", "Sepedi" to "Dilekhemisi", "Setswana" to "Dikhemisi", "isiXhosa" to "Iikhemesti"),
+            "Emergency Care" to mapOf("isiZulu" to "Ukunakekelwa Kwezimo Eziphuthumayo", "Sesotho" to "Tlhokomelo ya Tshahlelo", "Afrikaans" to "Nooddsorg", "Sepedi" to "Tlhokomelo ya Tšhoganetšo", "Setswana" to "Tlhokomelo ya Toshoganyetso", "isiXhosa" to "Ukhathalelo Lwezimo Ezingxamisekileyo"),
+            "Medication reminders" to mapOf("isiZulu" to "Izikhumbuzo zemithi", "Sesotho" to "Dikgopotso tsa meriana", "Afrikaans" to "Medikasie herinneringe", "Sepedi" to "Dikgopotso tsa dihlare", "Setswana" to "Dikgopotso tsa meriana", "isiXhosa" to "Izikhumbuzo zemiyeza"),
+            "Sign Out" to mapOf("isiZulu" to "Phuma", "Sesotho" to "Tswa", "Afrikaans" to "Meld af", "Sepedi" to "Tswa", "Setswana" to "Tswaa", "isiXhosa" to "Phuma")
         )
 
         val langCode = when {
@@ -359,6 +378,20 @@ object Strings {
 
         if (langCode == "English") return phrase
 
-        return phraseMap[trimmed]?.get(langCode) ?: phrase
+        // Check exact match first
+        val exactMatch = phraseMap[trimmed]?.get(langCode)
+        if (!exactMatch.isNullOrBlank()) return exactMatch
+
+        // Partial phrase match for titles containing substrings
+        for ((key, translations) in phraseMap) {
+            if (trimmed.contains(key, ignoreCase = true)) {
+                val trans = translations[langCode]
+                if (!trans.isNullOrBlank()) {
+                    return trimmed.replace(key, trans, ignoreCase = true)
+                }
+            }
+        }
+
+        return phrase
     }
 }
