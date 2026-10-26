@@ -104,6 +104,9 @@ class XmlUiController(
                     showScreen(0) // Show Dashboard once logged in
                 }
                 if (session != null) {
+                    val lang = session.preferredLanguage
+                    currentScreenLayout?.let { translateStaticTextsInView(it, lang) }
+                    rootContainer.let { updateBottomNavText(it, lang) }
                     applyThemeToXmlRoot(session.darkThemeEnabled)
                 }
             }
@@ -152,7 +155,46 @@ class XmlUiController(
         }
     }
 
+    fun translateStaticTextsInView(view: View?, languageName: String) {
+        if (view == null) return
+
+        if (view is TextView) {
+            val text = view.text?.toString() ?: ""
+            if (text.isNotBlank()) {
+                val translated = com.example.util.Strings.translatePhrase(text, languageName)
+                if (translated != text) {
+                    view.text = translated
+                }
+            }
+            if (view is EditText) {
+                val hint = view.hint?.toString() ?: ""
+                if (hint.isNotBlank()) {
+                    val translatedHint = com.example.util.Strings.translatePhrase(hint, languageName)
+                    if (translatedHint != hint) {
+                        view.hint = translatedHint
+                    }
+                }
+            }
+        } else if (view is ViewGroup) {
+            for (i in 0 until view.childCount) {
+                translateStaticTextsInView(view.getChildAt(i), languageName)
+            }
+        }
+    }
+
+    private fun updateBottomNavText(mainView: View, lang: String) {
+        mainView.findViewById<TextView>(R.id.nav_dash)?.text = "🏠\n" + com.example.util.Strings.translatePhrase("Dashboard", lang)
+        mainView.findViewById<TextView>(R.id.nav_log)?.text = "➕\n" + com.example.util.Strings.translatePhrase("Log Reading", lang)
+        mainView.findViewById<TextView>(R.id.nav_meds)?.text = "💊\n" + com.example.util.Strings.translatePhrase("Medications", lang)
+        mainView.findViewById<TextView>(R.id.nav_history)?.text = "📅\n" + com.example.util.Strings.translatePhrase("History", lang)
+        mainView.findViewById<TextView>(R.id.nav_clinics)?.text = "🏥\n" + com.example.util.Strings.translatePhrase("Clinics", lang)
+        mainView.findViewById<TextView>(R.id.nav_settings)?.text = "⚙️\n" + com.example.util.Strings.translatePhrase("Settings", lang)
+    }
+
     private fun updateBottomNavHighlight(mainView: View) {
+        val selectedLang = viewModel.userSession.value?.preferredLanguage ?: "English"
+        updateBottomNavText(mainView, selectedLang)
+
         val navIds = listOf(
             R.id.nav_dash to 0,
             R.id.nav_log to 1,
@@ -199,6 +241,9 @@ class XmlUiController(
         val view = inflater.inflate(layoutId, container, false)
         currentScreenLayout = view
         container.addView(view)
+
+        val selectedLang = viewModel.userSession.value?.preferredLanguage ?: "English"
+        translateStaticTextsInView(view, selectedLang)
 
         when (index) {
             -1 -> setupAuthView(view)
@@ -268,6 +313,15 @@ class XmlUiController(
                 btnPrimary?.text = com.example.util.Strings.get("login", selectedLang)
                 tvGoogleLabel?.text = com.example.util.Strings.get("continue_google", selectedLang)
             }
+        }
+
+        spinnerLang?.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: View?, position: Int, id: Long) {
+                val selectedLang = languages[position]
+                updateTabs()
+                translateStaticTextsInView(view, selectedLang)
+            }
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
 
         tabSignIn?.setOnClickListener {

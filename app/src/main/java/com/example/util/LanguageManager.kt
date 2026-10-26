@@ -317,4 +317,48 @@ object Strings {
         }
         return map[key] ?: englishMap[key] ?: key
     }
+
+    fun translatePhrase(phrase: String, languageName: String = "English"): String {
+        val trimmed = phrase.trim()
+        if (trimmed.isEmpty()) return phrase
+
+        val directTranslation = get(trimmed, languageName)
+        if (directTranslation != trimmed && directTranslation.isNotBlank()) {
+            return directTranslation
+        }
+
+        val phraseMap = mapOf(
+            "Dashboard" to mapOf("isiZulu" to "Ikhaya", "Sesotho" to "Legae", "Afrikaans" to "Tuisblad", "Sepedi" to "Gae", "Setswana" to "Legae", "isiXhosa" to "Ikhaya"),
+            "Log Reading" to mapOf("isiZulu" to "Bhalisa Isilinganiso", "Sesotho" to "Nka Sekala", "Afrikaans" to "Teken Lesing Aan", "Sepedi" to "Gatisa Sekala", "Setswana" to "Kwala Sekale", "isiXhosa" to "Bhala Umlinganiselo"),
+            "Medications" to mapOf("isiZulu" to "Imithi", "Sesotho" to "Meriana", "Afrikaans" to "Medikasie", "Sepedi" to "Dihlare", "Setswana" to "Meriana", "isiXhosa" to "Amiyeza"),
+            "History" to mapOf("isiZulu" to "Umlando", "Sesotho" to "Ntlha ya Nakong", "Afrikaans" to "Geskiedenis", "Sepedi" to "Nako ye e fetilego", "Setswana" to "Ditiragalo", "isiXhosa" to "Imbali"),
+            "Clinics" to mapOf("isiZulu" to "Amakliniki", "Sesotho" to "Ditleliniki", "Afrikaans" to "Klinieke", "Sepedi" to "Ditleleniki", "Setswana" to "Ditleleniki", "isiXhosa" to "Amakliniki"),
+            "Settings" to mapOf("isiZulu" to "Izilungiselelo", "Sesotho" to "Disetting", "Afrikaans" to "Instellings", "Sepedi" to "Dihlopho", "Setswana" to "Di-setting", "isiXhosa" to "Izilungiselelo"),
+            "Sign In" to mapOf("isiZulu" to "Ngena", "Sesotho" to "Kena", "Afrikaans" to "Teken in", "Sepedi" to "Tsena", "Setswana" to "Kena", "isiXhosa" to "Ngena"),
+            "Register" to mapOf("isiZulu" to "Bhalisa", "Sesotho" to "Ingolise", "Afrikaans" to "Registreer", "Sepedi" to "Iingolise", "Setswana" to "Ikwalise", "isiXhosa" to "Bhalisa"),
+            "Full Name" to mapOf("isiZulu" to "Igama Eliphelele", "Sesotho" to "Lebitso Ka Botlalo", "Afrikaans" to "Volle Naam", "Sepedi" to "Leina Ka Botlalo", "Setswana" to "Leina Ka Botlalo", "isiXhosa" to "Igama Elipheleleyo"),
+            "Email Address" to mapOf("isiZulu" to "I-meyili", "Sesotho" to "Imeile", "Afrikaans" to "E-pos Adres", "Sepedi" to "Imeile", "Setswana" to "Emeile", "isiXhosa" to "I-imeyile"),
+            "Password / PIN" to mapOf("isiZulu" to "Inkomba-fihlo", "Sesotho" to "Lekunutu", "Afrikaans" to "Wagwoord", "Sepedi" to "Lekunutu", "Setswana" to "Lekwalo La Sephiri", "isiXhosa" to "Ikhodi Yokungena"),
+            "Sign In to DoseMate" to mapOf("isiZulu" to "Ngena ku-DoseMate", "Sesotho" to "Kena ho DoseMate", "Afrikaans" to "Teken in by DoseMate", "Sepedi" to "Tsena go DoseMate", "Setswana" to "Kena mo DoseMate", "isiXhosa" to "Ngena ku-DoseMate"),
+            "Create DoseMate Account" to mapOf("isiZulu" to "Dala I-akhawunti ye-DoseMate", "Sesotho" to "Etsa Akhaonto ya DoseMate", "Afrikaans" to "Skep DoseMate Rekening", "Sepedi" to "Hlama Akhaonte ya DoseMate", "Setswana" to "Dira Akhaonto ya DoseMate", "isiXhosa" to "Cala I-akhawunti ye-DoseMate"),
+            "Sign in with Google" to mapOf("isiZulu" to "Qhubeka nge-Google", "Sesotho" to "Tswela pele ka Google", "Afrikaans" to "Gaan voort met Google", "Sepedi" to "Tswela pele ka Google", "Setswana" to "Tswelela ka Google", "isiXhosa" to "Qhubeka nge-Google"),
+            "All Doses" to mapOf("isiZulu" to "Yonke Imithi", "Sesotho" to "Meriana Ka Moka", "Afrikaans" to "Alle Dosisse", "Sepedi" to "Dihlare Ka Moka", "Setswana" to "Meriana Yotlhe", "isiXhosa" to "Yonge Amiyeza"),
+            "Due Today" to mapOf("isiZulu" to "Efanele Namuhla", "Sesotho" to "E tswanelang Kajeno", "Afrikaans" to "Vandag Verskuldig", "Sepedi" to "Mohlaleng wa Lehono", "Setswana" to "E e tshwanetseng Gompieno", "isiXhosa" to "Efanelayo Wanamhla"),
+            "Completed" to mapOf("isiZulu" to "Iqediwe", "Sesotho" to "E qetilwe", "Afrikaans" to "Voltooi", "Sepedi" to "E feditswe", "Setswana" to "E feditswe", "isiXhosa" to "Iqukunjelwe")
+        )
+
+        val langCode = when {
+            languageName.equals("isiZulu", ignoreCase = true) -> "isiZulu"
+            languageName.equals("Sesotho", ignoreCase = true) -> "Sesotho"
+            languageName.equals("Afrikaans", ignoreCase = true) -> "Afrikaans"
+            languageName.equals("Sepedi", ignoreCase = true) -> "Sepedi"
+            languageName.equals("Setswana", ignoreCase = true) -> "Setswana"
+            languageName.equals("isiXhosa", ignoreCase = true) -> "isiXhosa"
+            else -> "English"
+        }
+
+        if (langCode == "English") return phrase
+
+        return phraseMap[trimmed]?.get(langCode) ?: phrase
+    }
 }
