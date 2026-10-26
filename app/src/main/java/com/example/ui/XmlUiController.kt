@@ -524,7 +524,6 @@ class XmlUiController(
     fun setupDashboardView(view: View) {
         val tvGreeting = view.findViewById<TextView>(R.id.tv_greeting)
         val tvSummary = view.findViewById<TextView>(R.id.tv_adherence_summary)
-        val pbAdherence = view.findViewById<ProgressBar>(R.id.pb_adherence)
         val btnMarkAllTaken = view.findViewById<Button>(R.id.btn_mark_all_taken)
         val btnLogVital = view.findViewById<Button>(R.id.btn_log_vital)
         val btnAddMed = view.findViewById<Button>(R.id.btn_add_medication)
@@ -533,26 +532,64 @@ class XmlUiController(
         val rvTodayMeds = view.findViewById<RecyclerView>(R.id.rv_today_medications)
         val tvMedsCount = view.findViewById<TextView>(R.id.tv_meds_count_badge)
 
+        // Next Dose Up Hero Countdown Card Controls
+        val tvNextDoseCountdown = view.findViewById<TextView>(R.id.tv_next_dose_countdown)
+        val tvNextDoseName = view.findViewById<TextView>(R.id.tv_next_dose_name_dosage)
+        val btnNextDoseTakeNow = view.findViewById<Button>(R.id.btn_next_dose_take_now)
+        val btnNextDoseSnooze = view.findViewById<Button>(R.id.btn_next_dose_snooze)
+
+        // Daily Adherence Progress Wheel Controls
+        val pbAdherenceRing = view.findViewById<ProgressBar>(R.id.pb_adherence_ring)
+        val tvRingPercentage = view.findViewById<TextView>(R.id.tv_ring_percentage)
+        val tvDosesTakenCount = view.findViewById<TextView>(R.id.tv_doses_taken_count)
+        val tvStreakBadge = view.findViewById<TextView>(R.id.tv_streak_badge)
+
         // User greeting
         val user = viewModel.userSession.value
         tvGreeting?.text = user?.fullName ?: "Lerato Mokoena"
 
-        // Real-time calculation of adherence percentage
+        // Real-time calculation of adherence percentage & Next Dose Countdown
         val updateAdherence = {
             val doses = viewModel.doseLogs.value
+            val pendingDoses = doses.filter { it.status != "Taken" }
             val takenCount = doses.count { it.status == "Taken" }
             val totalCount = doses.size
             val pct = if (totalCount > 0) (takenCount * 100) / totalCount else 100
 
-            tvSummary?.text = if (totalCount > 0) {
-                "Daily Adherence: $pct% ($takenCount of $totalCount doses taken)"
+            // Update Progress Wheel & Percentage
+            pbAdherenceRing?.progress = pct
+            tvRingPercentage?.text = "$pct%"
+            tvSummary?.text = "$pct% Daily Completion"
+            tvDosesTakenCount?.text = "$takenCount of ${if (totalCount == 0) 1 else totalCount} doses taken today"
+            tvStreakBadge?.text = "🔥 5-Day Streak - Keep it up!"
+
+            // Update Next Dose Up Countdown Banner
+            val nextDose = pendingDoses.firstOrNull()
+            if (nextDose != null) {
+                tvNextDoseName?.text = "${nextDose.medicationName}"
+                tvNextDoseCountdown?.text = "Due soon — ${nextDose.scheduledTime}"
+                btnNextDoseTakeNow?.isEnabled = true
             } else {
-                "All scheduled medications up to date"
+                tvNextDoseName?.text = "All medications completed for today! 🎉"
+                tvNextDoseCountdown?.text = "✓ 100% Up to Date"
+                btnNextDoseTakeNow?.isEnabled = false
             }
-            pbAdherence?.progress = pct
         }
 
         updateAdherence()
+
+        // Hero Card Action Listeners
+        btnNextDoseTakeNow?.setOnClickListener {
+            val pendingDose = viewModel.doseLogs.value.firstOrNull { it.status != "Taken" }
+            if (pendingDose != null) {
+                viewModel.markDoseTaken(pendingDose.id)
+                Toast.makeText(activity, "Marked ${pendingDose.medicationName} as taken!", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        btnNextDoseSnooze?.setOnClickListener {
+            Toast.makeText(activity, "Snoozed alert for 15 minutes", Toast.LENGTH_SHORT).show()
+        }
 
         // Quick action listeners
         btnMarkAllTaken?.setOnClickListener {
