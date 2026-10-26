@@ -159,20 +159,29 @@ class XmlUiController(
         if (view == null) return
 
         if (view is TextView) {
-            val text = view.text?.toString() ?: ""
-            if (text.isNotBlank()) {
-                val translated = com.example.util.Strings.translatePhrase(text, languageName)
-                if (translated != text) {
-                    view.text = translated
-                }
+            val currentText = view.text?.toString() ?: ""
+            var originalText = view.getTag(R.id.tag_original_text) as? String
+            if (originalText.isNullOrBlank() && currentText.isNotBlank()) {
+                originalText = currentText
+                view.setTag(R.id.tag_original_text, originalText)
             }
+
+            if (!originalText.isNullOrBlank()) {
+                val translated = com.example.util.Strings.translatePhrase(originalText, languageName)
+                view.text = translated
+            }
+
             if (view is EditText) {
-                val hint = view.hint?.toString() ?: ""
-                if (hint.isNotBlank()) {
-                    val translatedHint = com.example.util.Strings.translatePhrase(hint, languageName)
-                    if (translatedHint != hint) {
-                        view.hint = translatedHint
-                    }
+                val currentHint = view.hint?.toString() ?: ""
+                var originalHint = view.getTag(R.id.tag_original_hint) as? String
+                if (originalHint.isNullOrBlank() && currentHint.isNotBlank()) {
+                    originalHint = currentHint
+                    view.setTag(R.id.tag_original_hint, originalHint)
+                }
+
+                if (!originalHint.isNullOrBlank()) {
+                    val translatedHint = com.example.util.Strings.translatePhrase(originalHint, languageName)
+                    view.hint = translatedHint
                 }
             }
         } else if (view is ViewGroup) {
@@ -282,20 +291,22 @@ class XmlUiController(
 
         // Populate existing session if available
         val currentUser = viewModel.userSession.value
-        if (currentUser != null && currentUser.isLoggedIn && currentUser.email.isNotBlank()) {
+        if (currentUser != null && currentUser.email.isNotBlank()) {
             etEmail?.setText(currentUser.email)
             if (currentUser.fullName.isNotBlank()) {
                 etName?.setText(currentUser.fullName)
             }
-            val langIdx = languages.indexOf(currentUser.preferredLanguage)
-            if (langIdx >= 0) {
-                spinnerLang?.setSelection(langIdx)
-            }
+        }
+
+        val activeLang = currentUser?.preferredLanguage ?: "English"
+        val langIdx = languages.indexOf(activeLang)
+        if (langIdx >= 0) {
+            spinnerLang?.setSelection(langIdx, false)
         }
 
         // Toggle between Sign In & Register
         fun updateTabs() {
-            val selectedLang = spinnerLang?.selectedItem?.toString() ?: "English"
+            val selectedLang = spinnerLang?.selectedItem?.toString() ?: (viewModel.userSession.value?.preferredLanguage ?: "English")
             if (isRegister) {
                 tabRegister?.setBackgroundResource(R.drawable.bg_tab_selected)
                 tabRegister?.setTextColor(android.graphics.Color.WHITE)
@@ -318,8 +329,12 @@ class XmlUiController(
         spinnerLang?.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: View?, position: Int, id: Long) {
                 val selectedLang = languages[position]
+                if (selectedLang != (viewModel.userSession.value?.preferredLanguage ?: "English")) {
+                    viewModel.updateLanguage(selectedLang)
+                }
                 updateTabs()
                 translateStaticTextsInView(view, selectedLang)
+                rootContainer.let { updateBottomNavText(it, selectedLang) }
             }
             override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
         }
@@ -1516,16 +1531,26 @@ class XmlUiController(
         }
 
         // Language Selection Spinner Setup
-        val languages = arrayOf("English", "Sepedi", "Sesotho", "Setswana", "isiZulu", "Afrikaans", "isiXhosa")
+        val languages = arrayOf("English", "isiZulu", "Sesotho", "Afrikaans", "Sepedi", "Setswana", "isiXhosa")
         val adapter = android.widget.ArrayAdapter(activity, android.R.layout.simple_spinner_dropdown_item, languages)
         spinnerLang?.adapter = adapter
+
+        // Pre-select current active user language before setting item selected listener
+        val activeLang = viewModel.userSession.value?.preferredLanguage ?: "English"
+        val activeLangIdx = languages.indexOf(activeLang)
+        if (activeLangIdx >= 0) {
+            spinnerLang?.setSelection(activeLangIdx, false)
+        }
 
         spinnerLang?.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selectedLang = languages[position]
-                if (selectedLang != (viewModel.userSession.value?.preferredLanguage ?: "English")) {
+                val currentSessionLang = viewModel.userSession.value?.preferredLanguage ?: "English"
+                if (selectedLang != currentSessionLang) {
                     viewModel.updateLanguage(selectedLang)
                     tvActiveLang?.text = "$selectedLang (South Africa)"
+                    translateStaticTextsInView(view, selectedLang)
+                    rootContainer.let { updateBottomNavText(it, selectedLang) }
                     Toast.makeText(activity, "Language updated to $selectedLang", Toast.LENGTH_SHORT).show()
                 }
             }

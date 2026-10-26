@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <item name="tag_map_html" type="id" />
+    <item name="tag_original_text" type="id" />
+    <item name="tag_original_hint" type="id" />
 </resources>
