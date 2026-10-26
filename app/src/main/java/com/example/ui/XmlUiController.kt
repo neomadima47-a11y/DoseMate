@@ -229,7 +229,7 @@ class XmlUiController(
         val container = fragmentContainer ?: rootContainer
         container.removeAllViews()
 
-        if (index == -1) {
+        if (index == -1 || index == 1) {
             bottomNavBar?.visibility = View.GONE
         } else {
             bottomNavBar?.visibility = View.VISIBLE
@@ -627,7 +627,10 @@ class XmlUiController(
         val layoutGroqReplying = view.findViewById<LinearLayout>(R.id.layout_groq_replying)
         val layoutChatContainer = view.findViewById<LinearLayout>(R.id.layout_chat_messages_container)
         val btnClearChat = view.findViewById<TextView>(R.id.btn_clear_chat)
+        val btnBackToDashboard = view.findViewById<TextView>(R.id.btn_back_to_dashboard)
         val scrollLogReading = view.findViewById<ScrollView>(R.id.scroll_log_reading)
+
+        btnBackToDashboard?.setOnClickListener { showScreen(0) }
 
         fun scrollToBottom() {
             scrollLogReading?.postDelayed({
