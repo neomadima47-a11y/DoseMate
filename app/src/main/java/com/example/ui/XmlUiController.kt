@@ -285,8 +285,8 @@ class XmlUiController(
 
         // Setup All South African Languages in Spinner
         val languages = listOf("English", "isiZulu", "Sesotho", "Afrikaans", "Sepedi", "Setswana", "isiXhosa")
-        val langAdapter = android.widget.ArrayAdapter(activity, android.R.layout.simple_spinner_item, languages)
-        langAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        val langAdapter = android.widget.ArrayAdapter(activity, R.layout.spinner_item_dark, languages)
+        langAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item_dark)
         spinnerLang?.adapter = langAdapter
 
         // Populate existing session if available
@@ -861,7 +861,8 @@ class XmlUiController(
 
         // Frequency options
         val freqOptions = arrayOf("1x Daily (Once a day)", "2x Daily (Twice a day)", "3x Daily (Thrice a day)", "4x Daily (4 times a day)")
-        val freqAdapter = android.widget.ArrayAdapter(activity, android.R.layout.simple_spinner_dropdown_item, freqOptions)
+        val freqAdapter = android.widget.ArrayAdapter(activity, R.layout.spinner_item_dark, freqOptions)
+        freqAdapter.setDropDownViewResource(R.layout.spinner_dropdown_item_dark)
         spinnerFreq?.adapter = freqAdapter
 
         fun updateRowVisibilities(count: Int) {
@@ -1569,7 +1570,8 @@ class XmlUiController(
 
         // Language Selection Spinner Setup
         val languages = arrayOf("English", "isiZulu", "Sesotho", "Afrikaans", "Sepedi", "Setswana", "isiXhosa")
-        val adapter = android.widget.ArrayAdapter(activity, android.R.layout.simple_spinner_dropdown_item, languages)
+        val adapter = android.widget.ArrayAdapter(activity, R.layout.spinner_item_dark, languages)
+        adapter.setDropDownViewResource(R.layout.spinner_dropdown_item_dark)
         spinnerLang?.adapter = adapter
 
         // Pre-select current active user language before setting item selected listener
