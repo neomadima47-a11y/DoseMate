@@ -229,8 +229,8 @@ class XmlUiController(
         val tvGoogleLabel = view.findViewById<TextView>(R.id.tv_auth_google_label)
         var isRegister = false
 
-        // Setup Language Spinner
-        val languages = listOf("English", "isiZulu", "Sesotho", "Afrikaans")
+        // Setup All South African Languages in Spinner
+        val languages = listOf("English", "isiZulu", "Sesotho", "Afrikaans", "Sepedi", "Setswana", "isiXhosa")
         val langAdapter = android.widget.ArrayAdapter(activity, android.R.layout.simple_spinner_item, languages)
         langAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerLang?.adapter = langAdapter
@@ -250,22 +250,23 @@ class XmlUiController(
 
         // Toggle between Sign In & Register
         fun updateTabs() {
+            val selectedLang = spinnerLang?.selectedItem?.toString() ?: "English"
             if (isRegister) {
                 tabRegister?.setBackgroundResource(R.drawable.bg_tab_selected)
                 tabRegister?.setTextColor(android.graphics.Color.WHITE)
                 tabSignIn?.setBackgroundResource(0)
                 tabSignIn?.setTextColor(android.graphics.Color.parseColor("#9CA3AF"))
                 layoutName?.visibility = View.VISIBLE
-                btnPrimary?.text = "Create DoseMate Account"
-                tvGoogleLabel?.text = "Sign up with Google"
+                btnPrimary?.text = com.example.util.Strings.get("create_account", selectedLang)
+                tvGoogleLabel?.text = com.example.util.Strings.get("continue_google", selectedLang)
             } else {
                 tabSignIn?.setBackgroundResource(R.drawable.bg_tab_selected)
                 tabSignIn?.setTextColor(android.graphics.Color.WHITE)
                 tabRegister?.setBackgroundResource(0)
                 tabRegister?.setTextColor(android.graphics.Color.parseColor("#9CA3AF"))
                 layoutName?.visibility = View.GONE
-                btnPrimary?.text = "Sign In to DoseMate"
-                tvGoogleLabel?.text = "Sign in with Google"
+                btnPrimary?.text = com.example.util.Strings.get("login", selectedLang)
+                tvGoogleLabel?.text = com.example.util.Strings.get("continue_google", selectedLang)
             }
         }
 

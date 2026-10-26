@@ -1,5 +1,6 @@
 package com.example.ui
 
+import com.example.util.Strings
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -35,5 +36,23 @@ class AuthPageRequirementsTest {
 
         assertTrue(registerState)
         assertFalse(signInState)
+    }
+
+    @Test
+    fun testSouthAfricanLanguagesLocalization() {
+        val saLanguages = listOf("English", "isiZulu", "Sesotho", "Afrikaans", "Sepedi", "Setswana", "isiXhosa")
+
+        for (lang in saLanguages) {
+            val loginStr = Strings.get("login", lang)
+            val dashboardStr = Strings.get("dashboard", lang)
+
+            assertTrue("String for $lang must not be empty", loginStr.isNotBlank())
+            assertTrue("Dashboard string for $lang must not be empty", dashboardStr.isNotBlank())
+        }
+
+        assertEquals("Ngena", Strings.get("login", "isiZulu"))
+        assertEquals("Kena", Strings.get("login", "Sesotho"))
+        assertEquals("Teken in", Strings.get("login", "Afrikaans"))
+        assertEquals("Tsena", Strings.get("login", "Sepedi"))
     }
 }

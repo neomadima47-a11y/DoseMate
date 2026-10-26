@@ -2,9 +2,12 @@ package com.example.util
 
 enum class AppLanguage(val code: String, val displayName: String, val nativeName: String) {
     ENGLISH("en", "English", "English"),
-    SETSWANA("tn", "Setswana", "Setswana"),
     ISIZULU("zu", "isiZulu", "isiZulu"),
-    AFRIKAANS("af", "Afrikaans", "Afrikaans")
+    SESOTHO("st", "Sesotho", "Sesotho"),
+    AFRIKAANS("af", "Afrikaans", "Afrikaans"),
+    SEPEDI("nso", "Sepedi", "Sepedi"),
+    SETSWANA("tn", "Setswana", "Setswana"),
+    ISIXHOSA("xh", "isiXhosa", "isiXhosa")
 }
 
 object Strings {
@@ -50,48 +53,6 @@ object Strings {
         "logout" to "Log out"
     )
 
-    private val setswanaMap = mapOf(
-        "app_tagline" to "Botsogo jwa gago, ka melao ya gago",
-        "login" to "Kena",
-        "create_account" to "Dira akhaonto",
-        "register" to "Ikwalise",
-        "continue_google" to "Tswelela ka Google",
-        "email" to "Emeile",
-        "password" to "Lekwalo la sephiri",
-        "full_name" to "Leina ka botlalo",
-        "preferred_language" to "Puo e e elediwang",
-        "dashboard" to "Legae",
-        "medications" to "Meriana",
-        "log_reading" to "Kwala sekale",
-        "find_clinic" to "Batla tleleniki",
-        "settings" to "Di-setting",
-        "today_medication" to "Meriana ya gompieno",
-        "health_log" to "Pekano ya botsogo",
-        "saved_offline" to "e bolokilwe ntle le inthanete",
-        "add_medication" to "Tsenya molemo",
-        "medication_name" to "Leina la molemo",
-        "dosage" to "Tekanyo",
-        "frequency" to "Kgafetsa",
-        "reminder_times" to "Dinako tsa kgopotso",
-        "save_medication" to "Boloka molemo",
-        "save_reading" to "Boloka sekale",
-        "adherence" to "Tiriso ya molemo beke e",
-        "blood_sugar" to "Madi a mantsi/sukiri",
-        "blood_pressure" to "Kgotlelo ya madi",
-        "symptom" to "Matshwao",
-        "when_taken" to "E tserwe leng",
-        "notes" to "Dintlha (fa o batla)",
-        "offline_save_notice" to "E tla bolokwa mo founong e bo e sync fela fa inthanete e bowa",
-        "nearby_clinics" to "Ditleleniki tse di gaufi",
-        "get_directions" to "Kopa ditaelo tsa tsela",
-        "online_locator" to "Mmapa wa inthanete wa tleleniki",
-        "weather_tip" to "Letsatsi le le tsididi/gabo — boloka insulin fa tlase ga 25°C",
-        "medication_reminders" to "Dikgopotso tsa meriana",
-        "dark_mode" to "Monepo wa lefifi",
-        "change_password" to "Phetola lekwalo la sephiri",
-        "logout" to "Tswaa"
-    )
-
     private val isizuluMap = mapOf(
         "app_tagline" to "Impilo yakho, ngemibandela yakho",
         "login" to "Ngena",
@@ -132,6 +93,48 @@ object Strings {
         "dark_mode" to "Imo emnyama",
         "change_password" to "Shintsha iphasiwedi",
         "logout" to "Phuma"
+    )
+
+    private val sesothoMap = mapOf(
+        "app_tagline" to "Bophelo ba hao, ka melao ya hao",
+        "login" to "Kena",
+        "create_account" to "Etsa akhaonto",
+        "register" to "Ingolise",
+        "continue_google" to "Tswela pele ka Google",
+        "email" to "Imeile",
+        "password" to "Lekunutu",
+        "full_name" to "Lebitso ka botlalo",
+        "preferred_language" to "Puo e kgethilweng",
+        "dashboard" to "Legae",
+        "medications" to "Meriana",
+        "log_reading" to "Nka sekala",
+        "find_clinic" to "Batla tleliniki",
+        "settings" to "Disetting",
+        "today_medication" to "Meriana ya kajeno",
+        "health_log" to "Buka ya bophelo",
+        "saved_offline" to "e bolokilwe offline",
+        "add_medication" to "Otsa moriana",
+        "medication_name" to "Lebitso la moriana",
+        "dosage" to "Tekanyo",
+        "frequency" to "Kgafetsa",
+        "reminder_times" to "Dinako tsa kgopotso",
+        "save_medication" to "Boloka moriana",
+        "save_reading" to "Boloka sekala",
+        "adherence" to "Tiriso ya moriana beke ena",
+        "blood_sugar" to "Madi a tsoekere",
+        "blood_pressure" to "Kgotlelo ya madi",
+        "symptom" to "Matshwao",
+        "when_taken" to "E tserwe neng",
+        "notes" to "Dintlha",
+        "offline_save_notice" to "E tla bolokwa sesebelisueng sena mme e sync ka ho iketsahalla",
+        "nearby_clinics" to "Ditleliniki tse haufi",
+        "get_directions" to "Fumanang ditaelo tsa tsela",
+        "online_locator" to "Mmapa wa inthanete wa tleliniki",
+        "weather_tip" to "Letsatsi le chesang — boloka insulin tlas'a 25°C",
+        "medication_reminders" to "Dikgopotso tsa meriana",
+        "dark_mode" to "Monepo wa lefifi",
+        "change_password" to "Fetola password",
+        "logout" to "Tswa"
     )
 
     private val afrikaansMap = mapOf(
@@ -176,11 +179,140 @@ object Strings {
         "logout" to "Meld af"
     )
 
+    private val sepediMap = mapOf(
+        "app_tagline" to "Bophelo bja gago, ka melao ya gago",
+        "login" to "Tsena",
+        "create_account" to "Hlama akhaonte",
+        "register" to "Iingolise",
+        "continue_google" to "Tswela pele ka Google",
+        "email" to "Imeile",
+        "password" to "Lekunutu",
+        "full_name" to "Leina ka botlalo",
+        "preferred_language" to "Polelo ye e kgethilwego",
+        "dashboard" to "Gae",
+        "medications" to "Dihlare",
+        "log_reading" to "Gatisa sekala",
+        "find_clinic" to "Seka tleleniki",
+        "settings" to "Dihlopho",
+        "today_medication" to "Dihlare tsa lehono",
+        "health_log" to "Puku ya bophelo",
+        "saved_offline" to "e bolokilwe ntle le inthanete",
+        "add_medication" to "Tsenya sehlare",
+        "medication_name" to "Leina la sehlare",
+        "dosage" to "Tekanyo",
+        "frequency" to "Makga",
+        "reminder_times" to "Dinako tsa kgopotso",
+        "save_medication" to "Boloka sehlare",
+        "save_reading" to "Boloka sekala",
+        "adherence" to "Tiriso ya sehlare beke ye",
+        "blood_sugar" to "Madi a swiri",
+        "blood_pressure" to "Kgotlelelo ya madi",
+        "symptom" to "Dika",
+        "when_taken" to "E tserwe neng",
+        "notes" to "Dintlha",
+        "offline_save_notice" to "E tla bolokwa mo founong mme ya sync ka go iketsagalela",
+        "nearby_clinics" to "Ditleleniki tsa kgauswi",
+        "get_directions" to "Kopa ditaelo tsa tsela",
+        "online_locator" to "Mmapa wa inthanete wa tleleniki",
+        "weather_tip" to "Letsatshi le le fisang — boloka insulin tlase ga 25°C",
+        "medication_reminders" to "Dikgopotso tsa dihlare",
+        "dark_mode" to "Monepo wa lefifi",
+        "change_password" to "Phetola lekunutu",
+        "logout" to "Tswa"
+    )
+
+    private val setswanaMap = mapOf(
+        "app_tagline" to "Botsogo jwa gago, ka melao ya gago",
+        "login" to "Kena",
+        "create_account" to "Dira akhaonto",
+        "register" to "Ikwalise",
+        "continue_google" to "Tswelela ka Google",
+        "email" to "Emeile",
+        "password" to "Lekwalo la sephiri",
+        "full_name" to "Leina ka botlalo",
+        "preferred_language" to "Puo e e elediwang",
+        "dashboard" to "Legae",
+        "medications" to "Meriana",
+        "log_reading" to "Kwala sekale",
+        "find_clinic" to "Batla tleleniki",
+        "settings" to "Di-setting",
+        "today_medication" to "Meriana ya gompieno",
+        "health_log" to "Pekano ya botsogo",
+        "saved_offline" to "e bolokilwe ntle le inthanete",
+        "add_medication" to "Tsenya molemo",
+        "medication_name" to "Leina la molemo",
+        "dosage" to "Tekanyo",
+        "frequency" to "Kgafetsa",
+        "reminder_times" to "Dinako tsa kgopotso",
+        "save_medication" to "Boloka molemo",
+        "save_reading" to "Boloka sekale",
+        "adherence" to "Tiriso ya molemo beke e",
+        "blood_sugar" to "Madi a mantsi/sukiri",
+        "blood_pressure" to "Kgotlelo ya madi",
+        "symptom" to "Matshwao",
+        "when_taken" to "E tserwe leng",
+        "notes" to "Dintlha (fa o batla)",
+        "offline_save_notice" to "E tla bolokwa mo founong e bo e sync fela fa inthanete e bowa",
+        "nearby_clinics" to "Ditleleniki tse di gaufi",
+        "get_directions" to "Kopa ditaelo tsa tsela",
+        "online_locator" to "Mmapa wa inthanete wa tleleniki",
+        "weather_tip" to "Letsatsi le le tsididi/gabo — boloka insulin fa tlase ga 25°C",
+        "medication_reminders" to "Dikgopotso tsa meriana",
+        "dark_mode" to "Monepo wa lefifi",
+        "change_password" to "Phetola lekwalo la sephiri",
+        "logout" to "Tswaa"
+    )
+
+    private val isixhosaMap = mapOf(
+        "app_tagline" to "Impilo yakho, ngokwemigaqo yakho",
+        "login" to "Ngena",
+        "create_account" to "Cala i-akhawunti",
+        "register" to "Bhalisa",
+        "continue_google" to "Qhubeka nge-Google",
+        "email" to "I-imeyile",
+        "password" to "Ikhodi yokungena",
+        "full_name" to "Igama elipheleleyo",
+        "preferred_language" to "Ulwimi olukhethiweyo",
+        "dashboard" to "Ikhaya",
+        "medications" to "Amiyeza",
+        "log_reading" to "Bhala umlinganiselo",
+        "find_clinic" to "Fumana ikliniki",
+        "settings" to "Izilungiselelo",
+        "today_medication" to "Amiyeza wanamhla",
+        "health_log" to "Ilogi yempilo",
+        "saved_offline" to "igcinwe ngaphandle kwe-intanethi",
+        "add_medication" to "Faka umyeza",
+        "medication_name" to "Igama lomyeza",
+        "dosage" to "Iskali",
+        "frequency" to "Amaxesha",
+        "reminder_times" to "Amaxesha esikhumbuzo",
+        "save_medication" to "Gcina umyeza",
+        "save_reading" to "Gcina umlinganiselo",
+        "adherence" to "Ukuthatha amiyeza kule veki",
+        "blood_sugar" to "Isonka somhlaba egazini",
+        "blood_pressure" to "Ufutho lwegazi",
+        "symptom" to "Izingqisho",
+        "when_taken" to "Ithathwe nini",
+        "notes" to "Amanqaku",
+        "offline_save_notice" to "Iza kugcinwa kule divayisi kwaye isincronise ngokuzenzekelayo",
+        "nearby_clinics" to "Amakliniki akufutshane",
+        "get_directions" to "Fumana izikhokelo",
+        "online_locator" to "Imephu yekliniki ye-intanethi",
+        "weather_tip" to "Kushushu namhlanje — gcina i-insulin ngaphantsi kuka-25°C",
+        "medication_reminders" to "Izikhumbuzo zemiyeza",
+        "dark_mode" to "Imo emnyama",
+        "change_password" to "Tshintsha iphasiwedi",
+        "logout" to "Phuma"
+    )
+
     fun get(key: String, languageName: String = "English"): String {
         val map = when {
-            languageName.equals("Setswana", ignoreCase = true) -> setswanaMap
             languageName.equals("isiZulu", ignoreCase = true) -> isizuluMap
+            languageName.equals("Sesotho", ignoreCase = true) -> sesothoMap
             languageName.equals("Afrikaans", ignoreCase = true) -> afrikaansMap
+            languageName.equals("Sepedi", ignoreCase = true) -> sepediMap
+            languageName.equals("Setswana", ignoreCase = true) -> setswanaMap
+            languageName.equals("isiXhosa", ignoreCase = true) -> isixhosaMap
             else -> englishMap
         }
         return map[key] ?: englishMap[key] ?: key
