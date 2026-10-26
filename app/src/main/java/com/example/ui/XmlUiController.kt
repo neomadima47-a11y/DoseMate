@@ -17,6 +17,7 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
@@ -626,6 +627,23 @@ class XmlUiController(
         val layoutGroqReplying = view.findViewById<LinearLayout>(R.id.layout_groq_replying)
         val layoutChatContainer = view.findViewById<LinearLayout>(R.id.layout_chat_messages_container)
         val btnClearChat = view.findViewById<TextView>(R.id.btn_clear_chat)
+        val scrollLogReading = view.findViewById<ScrollView>(R.id.scroll_log_reading)
+
+        fun scrollToBottom() {
+            scrollLogReading?.postDelayed({
+                scrollLogReading.fullScroll(View.FOCUS_DOWN)
+            }, 100)
+        }
+
+        etGroqInput?.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                scrollToBottom()
+            }
+        }
+
+        etGroqInput?.setOnClickListener {
+            scrollToBottom()
+        }
 
         val chatHistory = mutableListOf<GeminiHealthClient.ChatMessagePayload>()
 
@@ -646,6 +664,7 @@ class XmlUiController(
             }
             msgView.layoutParams = params
             layoutChatContainer?.addView(msgView)
+            scrollToBottom()
         }
 
         // Initial welcoming greeting from Google Gemini AI Assistant
