@@ -548,69 +548,73 @@ class XmlUiController(
         val user = viewModel.userSession.value
         tvGreeting?.text = user?.fullName ?: "Lerato Mokoena"
 
-        // Real-time calculation of adherence percentage & Next Dose Countdown
-        val updateAdherence = {
-            val doses = viewModel.doseLogs.value
-            val pendingDoses = doses.filter { it.status != "Taken" }
-            val takenCount = doses.count { it.status == "Taken" }
-            val totalCount = doses.size
-            val pct = if (totalCount > 0) (takenCount * 100) / totalCount else 100
-
-            // Update Progress Wheel & Percentage
-            pbAdherenceRing?.progress = pct
-            tvRingPercentage?.text = "$pct%"
-            tvSummary?.text = "$pct% Daily Completion"
-            tvDosesTakenCount?.text = "$takenCount of ${if (totalCount == 0) 1 else totalCount} doses taken today"
-            tvStreakBadge?.text = "🔥 5-Day Streak - Keep it up!"
-
-            // Update Next Dose Up Countdown Banner
-            val nextDose = pendingDoses.firstOrNull()
-            if (nextDose != null) {
-                tvNextDoseName?.text = "${nextDose.medicationName}"
-                tvNextDoseCountdown?.text = "Due soon — ${nextDose.scheduledTime}"
-                btnNextDoseTakeNow?.isEnabled = true
-            } else {
-                tvNextDoseName?.text = "All medications completed for today! 🎉"
-                tvNextDoseCountdown?.text = "✓ 100% Up to Date"
-                btnNextDoseTakeNow?.isEnabled = false
-            }
-        }
-
-        updateAdherence()
-
-        // Hero Card Action Listeners
-        btnNextDoseTakeNow?.setOnClickListener {
-            val pendingDose = viewModel.doseLogs.value.firstOrNull { it.status != "Taken" }
-            if (pendingDose != null) {
-                viewModel.markDoseTaken(pendingDose.id)
-                Toast.makeText(activity, "Marked ${pendingDose.medicationName} as taken!", Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        btnNextDoseSnooze?.setOnClickListener {
-            Toast.makeText(activity, "Snoozed alert for 15 minutes", Toast.LENGTH_SHORT).show()
-        }
-
-        // Quick action listeners
-        btnMarkAllTaken?.setOnClickListener {
-            viewModel.markAllPendingDosesTaken()
-            Toast.makeText(activity, "All pending doses marked taken!", Toast.LENGTH_SHORT).show()
-        }
-
-        btnLogVital?.setOnClickListener { showScreen(1) }
-        btnAddMed?.setOnClickListener { showAddMedicationDialog() }
-        btnFindClinic?.setOnClickListener { showScreen(4) }
-        btnHeaderNotifications?.setOnClickListener { showScreen(5) }
-        tvMedsCount?.setOnClickListener { showScreen(2) }
-
         // Today's Medications RecyclerView
         rvTodayMeds?.layoutManager = LinearLayoutManager(activity)
         rvTodayMeds?.adapter = medicationAdapter
 
         scope.launch {
-            viewModel.doseLogs.collectLatest { list ->
-                medicationAdapter.updateData(list)
-                updateAdherence()
+            kotlinx.coroutines.flow.combine(
+                viewModel.medications,
+                viewModel.doseLogs
+            ) { medsList, logsList ->
+                Pair(medsList, logsList)
+            }.collectLatest { (medsList, logsList) ->
+                val activeMeds = medsList.filter { it.status.equals("Active", ignoreCase = true) }
+                val displayDoses = mutableListOf<DoseLogEntity>()
+
+                for (med in activeMeds) {
+                    val times = med.reminderTimes.split(",").map { it.trim() }.filter { it.isNotEmpty() }.ifEmpty { listOf("08:00 AM") }
+                    val displayName = if (med.dosage.isNotBlank() && med.dosage != "1 dose" && med.dosage != "Standard dose") "${med.name} (${med.dosage})" else med.name
+
+                    for (timeStr in times) {
+                        val existingLog = logsList.find { log ->
+                            (log.medicationId == med.id || log.medicationName.contains(med.name, ignoreCase = true)) &&
+                                    (log.scheduledTime.equals(timeStr, ignoreCase = true) || times.size == 1)
+                        }
+
+                        if (existingLog != null) {
+                            displayDoses.add(existingLog)
+                        } else {
+                            displayDoses.add(
+                                DoseLogEntity(
+                                    medicationId = med.id,
+                                    medicationName = displayName,
+                                    scheduledTime = timeStr,
+                                    status = "Pending",
+                                    date = "Today"
+                                )
+                            )
+                        }
+                    }
+                }
+
+                val finalDosesList = displayDoses.distinctBy { "${it.medicationId}_${it.scheduledTime}" }
+                medicationAdapter.updateData(finalDosesList)
+
+                // Real-time calculation of adherence percentage & Next Dose Countdown
+                val pendingDoses = finalDosesList.filter { it.status != "Taken" }
+                val takenCount = finalDosesList.count { it.status == "Taken" }
+                val totalCount = finalDosesList.size
+                val pct = if (totalCount > 0) (takenCount * 100) / totalCount else 100
+
+                // Update Progress Wheel & Percentage
+                pbAdherenceRing?.progress = pct
+                tvRingPercentage?.text = "$pct%"
+                tvSummary?.text = "$pct% Daily Completion"
+                tvDosesTakenCount?.text = "$takenCount of ${if (totalCount == 0) 1 else totalCount} doses taken today"
+                tvStreakBadge?.text = if (pct == 100) "🔥 100% Perfect Adherence!" else "🔥 5-Day Streak - Keep it up!"
+
+                // Update Next Dose Up Countdown Banner
+                val nextDose = pendingDoses.firstOrNull()
+                if (nextDose != null) {
+                    tvNextDoseName?.text = "${nextDose.medicationName}"
+                    tvNextDoseCountdown?.text = "Due soon — ${nextDose.scheduledTime}"
+                    btnNextDoseTakeNow?.isEnabled = true
+                } else {
+                    tvNextDoseName?.text = "All medications completed for today! 🎉"
+                    tvNextDoseCountdown?.text = "✓ 100% Up to Date"
+                    btnNextDoseTakeNow?.isEnabled = false
+                }
             }
         }
     }
