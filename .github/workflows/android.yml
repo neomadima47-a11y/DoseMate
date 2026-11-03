@@ -1,4 +1,4 @@
-name: Android CI/CD Pipeline & Code Change Summary
+name: Android CI/CD Pipeline
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   validate-environment:
-    name: 1. 🛠️ Environment & Config Setup
+    name: 1. Environment & Config Setup
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Code
@@ -29,15 +29,18 @@ jobs:
         run: |
           echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY || 'gsk_mock_key' }}" >> .env
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY || 'MY_GEMINI_API_KEY' }}" >> .env
-          echo "OPENFDA_API_KEY=${{ secrets.OPENFDA_API_KEY || 'dMid8ZbycgBFvFZJwSWPGi6dISlhHV9Gr7BhId2m' }}" >> .env
+          echo "OPENFDA_API_KEY=${{ secrets.OPENFDA_API_KEY || 'MY_OPENFDA_KEY' }}" >> .env
           echo "SERPAPI_API_KEY=${{ secrets.SERPAPI_API_KEY || 'MY_SERPAPI_KEY' }}" >> .env
           echo "MAPBOX_ACCESS_TOKEN=${{ secrets.MAPBOX_ACCESS_TOKEN || 'pk.sample_mapbox_token' }}" >> .env
 
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
 
+      - name: Verify Project Configuration
+        run: ./gradlew :app:tasks --all --quiet
+
   run-unit-tests:
-    name: 2. 🧪 Unit Tests Suite
+    name: 2. Unit Test Suite
     needs: validate-environment
     runs-on: ubuntu-latest
     steps:
@@ -58,68 +61,21 @@ jobs:
         run: |
           echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY || 'gsk_mock_key' }}" >> .env
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY || 'MY_GEMINI_API_KEY' }}" >> .env
-          echo "OPENFDA_API_KEY=${{ secrets.OPENFDA_API_KEY || 'dMid8ZbycgBFvFZJwSWPGi6dISlhHV9Gr7BhId2m' }}" >> .env
+          echo "OPENFDA_API_KEY=${{ secrets.OPENFDA_API_KEY || 'MY_OPENFDA_KEY' }}" >> .env
           echo "SERPAPI_API_KEY=${{ secrets.SERPAPI_API_KEY || 'MY_SERPAPI_KEY' }}" >> .env
           echo "MAPBOX_ACCESS_TOKEN=${{ secrets.MAPBOX_ACCESS_TOKEN || 'pk.sample_mapbox_token' }}" >> .env
 
       - name: Grant Execute Permission for Gradlew
         run: chmod +x gradlew
 
-      - name: "🏥 Page 1: Clinic Search & Nearest Facility Filtering"
-        run: |
-          echo "=========================================="
-          echo "🏥 RUNNING: Clinic Search & Nearest Facility Filtering"
-          echo "=========================================="
-          ./gradlew testDebugUnitTest --tests "com.example.ui.ClinicPageTest" --info
+      # Part 3 feature tests: refill tracking and CSV health history export.
+      # Five test cases, each asserting both a valid and an invalid input.
+      - name: "Part 3 Features: Refill Tracking & CSV Export"
+        run: ./gradlew testDebugUnitTest --tests "com.example.DoseMateFeatureTest"
 
-      - name: "🗺️ Page 2: Google Maps GPS & Turn-by-Turn Navigation"
-        run: |
-          echo "=========================================="
-          echo "🗺️ RUNNING: Google Maps GPS & Turn-by-Turn Navigation"
-          echo "=========================================="
-          ./gradlew testDebugUnitTest --tests "com.example.ui.GoogleMapsNavigationTest" --info
-
-      - name: "🔔 Page 3: Medication System & Taken Notification Alerts"
-        run: |
-          echo "=========================================="
-          echo "🔔 RUNNING: Medication System & Taken Notification Alerts"
-          echo "=========================================="
-          ./gradlew testDebugUnitTest --tests "com.example.notifications.MedicationSystemTest" --info
-
-      - name: "💊 Page 4: Medication Schedule Creation & Status Filtering"
-        run: |
-          echo "=========================================="
-          echo "💊 RUNNING: Medication Schedule Creation & Status Filtering"
-          echo "=========================================="
-          ./gradlew testDebugUnitTest --tests "com.example.ui.MedicationsPageRequirementsTest" --info
-
-      - name: "🔒 Page 5: Authentication & Professional Login Validation"
-        run: |
-          echo "=========================================="
-          echo "🔒 RUNNING: Authentication & Professional Login Validation"
-          echo "=========================================="
-          ./gradlew testDebugUnitTest --tests "com.example.ui.AuthPageRequirementsTest" --info
-
-      - name: "🤖 Page 6: Official Google Generative AI Chatbot & Safety Overrides"
-        run: |
-          echo "=========================================="
-          echo "🤖 RUNNING: Official Google Generative AI Chatbot & Safety Overrides"
-          echo "=========================================="
-          ./gradlew testDebugUnitTest --tests "com.example.ui.ChatbotSystemTest" --info
-
-      - name: "📊 Page 7: Dashboard Enhancements (Next Dose Countdown & Progress Ring)"
-        run: |
-          echo "=========================================="
-          echo "📊 RUNNING: Dashboard Enhancements (Next Dose Countdown & Progress Ring)"
-          echo "=========================================="
-          ./gradlew testDebugUnitTest --tests "com.example.ui.DashboardEnhancementsTest" --info
-
-      - name: "🧪 Page 8: Core Framework Integration Suite"
-        run: |
-          echo "=========================================="
-          echo "🧪 RUNNING: Core Framework Integration Suite"
-          echo "=========================================="
-          ./gradlew testDebugUnitTest --tests "com.example.ExampleUnitTest" --info
+      # The remaining suites cover the screens delivered in Part 2.
+      - name: "Full Unit Test Suite"
+        run: ./gradlew testDebugUnitTest
 
       - name: Upload Test Reports Artifact
         if: always()
@@ -129,8 +85,46 @@ jobs:
           path: app/build/reports/tests/testDebugUnitTest/
           retention-days: 14
 
+      # Reads the generated XML results so the summary reflects the real run
+      # rather than hard-coded numbers.
+      - name: Publish Test Results to Summary
+        if: always()
+        run: |
+          echo "## DoseMate Unit Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          RESULTS_DIR="app/build/test-results/testDebugUnitTest"
+
+          if [ ! -d "$RESULTS_DIR" ]; then
+            echo "No test results were produced." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+
+          TOTAL=0
+          FAILURES=0
+          SKIPPED=0
+
+          echo "| Test class | Tests | Failures | Skipped |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|---|---|" >> $GITHUB_STEP_SUMMARY
+
+          for FILE in "$RESULTS_DIR"/*.xml; do
+            [ -e "$FILE" ] || continue
+            NAME=$(basename "$FILE" .xml | sed 's/^TEST-//')
+            T=$(grep -o 'tests="[0-9]*"' "$FILE" | head -1 | grep -o '[0-9]*')
+            F=$(grep -o 'failures="[0-9]*"' "$FILE" | head -1 | grep -o '[0-9]*')
+            S=$(grep -o 'skipped="[0-9]*"' "$FILE" | head -1 | grep -o '[0-9]*')
+            T=${T:-0}; F=${F:-0}; S=${S:-0}
+            TOTAL=$((TOTAL + T))
+            FAILURES=$((FAILURES + F))
+            SKIPPED=$((SKIPPED + S))
+            echo "| $NAME | $T | $F | $S |" >> $GITHUB_STEP_SUMMARY
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Total:** $TOTAL tests, $FAILURES failures, $SKIPPED skipped" >> $GITHUB_STEP_SUMMARY
+
   build-package-apk:
-    name: 3. 📦 APK Assembly & Build
+    name: 3. APK Assembly & Build
     needs: run-unit-tests
     runs-on: ubuntu-latest
     steps:
@@ -151,7 +145,7 @@ jobs:
         run: |
           echo "GROQ_API_KEY=${{ secrets.GROQ_API_KEY || 'gsk_mock_key' }}" >> .env
           echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY || 'MY_GEMINI_API_KEY' }}" >> .env
-          echo "OPENFDA_API_KEY=${{ secrets.OPENFDA_API_KEY || 'dMid8ZbycgBFvFZJwSWPGi6dISlhHV9Gr7BhId2m' }}" >> .env
+          echo "OPENFDA_API_KEY=${{ secrets.OPENFDA_API_KEY || 'MY_OPENFDA_KEY' }}" >> .env
           echo "SERPAPI_API_KEY=${{ secrets.SERPAPI_API_KEY || 'MY_SERPAPI_KEY' }}" >> .env
           echo "MAPBOX_ACCESS_TOKEN=${{ secrets.MAPBOX_ACCESS_TOKEN || 'pk.sample_mapbox_token' }}" >> .env
 
@@ -168,24 +162,9 @@ jobs:
           path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
 
-  publish-summary-report:
-    name: 4. 📊 Pipeline Results Summary
-    needs: build-package-apk
-    runs-on: ubuntu-latest
-    steps:
-      - name: Publish Detailed Code Changes Summary
+      - name: Publish Build Summary
         run: |
-          echo "## 🚀 DoseMate GitHub Actions Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "## Build Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📊 Pipeline Jobs Status" >> $GITHUB_STEP_SUMMARY
-          echo "- **Job 1: Environment Setup**: ✅ Completed" >> $GITHUB_STEP_SUMMARY
-          echo "- **Job 2: Unit Test Suite**: ✅ Passed All 32 Unit Tests" >> $GITHUB_STEP_SUMMARY
-          echo "  - Clinic Search Tests: ✅ Passed (4/4)" >> $GITHUB_STEP_SUMMARY
-          echo "  - Google Maps Navigation Tests: ✅ Passed (4/4)" >> $GITHUB_STEP_SUMMARY
-          echo "  - Medication System Tests: ✅ Passed (5/5)" >> $GITHUB_STEP_SUMMARY
-          echo "  - Medication Requirements Tests: ✅ Passed (5/5)" >> $GITHUB_STEP_SUMMARY
-          echo "  - Authentication & Login Tests: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
-          echo "  - Google Generative AI Chatbot Tests: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
-          echo "  - Dashboard Countdown & Ring Tests: ✅ Passed (3/3)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Job 3: APK Assembly**: ✅ Built \`app-debug.apk\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Job 4: Results Summary**: ✅ Published Summary" >> $GITHUB_STEP_SUMMARY
+          echo "Debug APK built and uploaded as an artifact." >> $GITHUB_STEP_SUMMARY
+          echo "Commit: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
