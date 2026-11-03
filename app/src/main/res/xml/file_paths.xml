@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Declares the folders that DoseMate may share files from.
+    The CSV export is written to the app's private cache directory and shared
+    through FileProvider, so no storage permission is needed.
+-->
+<paths>
+    <cache-path
+        name="exports"
+        path="exports/" />
+</paths>

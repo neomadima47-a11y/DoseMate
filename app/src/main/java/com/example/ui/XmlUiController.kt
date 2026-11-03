@@ -1076,6 +1076,10 @@ class XmlUiController(
         val rvLogs = view.findViewById<RecyclerView>(R.id.rv_history_logs)
         val layoutEmpty = view.findViewById<LinearLayout>(R.id.layout_empty_history)
 
+        // Feature 5: CSV export controls
+        val btnExportCsv = view.findViewById<Button>(R.id.btn_export_csv)
+        val tvExportSummary = view.findViewById<TextView>(R.id.tv_export_summary)
+
         rvLogs?.layoutManager = LinearLayoutManager(activity)
         rvLogs?.adapter = medicationAdapter
 
@@ -1108,11 +1112,11 @@ class XmlUiController(
 
             val matchedLogs = allDoses.filter { log ->
                 log.date == targetIso ||
-                log.date.equals(targetFull, ignoreCase = true) ||
-                (isToday && (log.date == "Today" || log.date == targetIso)) ||
-                (diffDays == 1 && (log.date == "Yesterday" || log.date == targetIso)) ||
-                (diffDays == 2 && (log.date == "2 days ago" || log.date == targetIso)) ||
-                (diffDays in 3..30 && log.date.contains("$diffDays days ago", ignoreCase = true))
+                        log.date.equals(targetFull, ignoreCase = true) ||
+                        (isToday && (log.date == "Today" || log.date == targetIso)) ||
+                        (diffDays == 1 && (log.date == "Yesterday" || log.date == targetIso)) ||
+                        (diffDays == 2 && (log.date == "2 days ago" || log.date == targetIso)) ||
+                        (diffDays in 3..30 && log.date.contains("$diffDays days ago", ignoreCase = true))
             }.distinctBy { "${it.medicationId}_${it.scheduledTime}" }
 
             if (matchedLogs.isNotEmpty()) {
@@ -1295,6 +1299,53 @@ class XmlUiController(
                 renderCalendarGrid()
                 updateSelectedDateDetails(selectedCalendar)
             }.collectLatest {}
+        }
+
+        // Feature 5: keep the export summary line showing how much data is available
+        scope.launch {
+            kotlinx.coroutines.flow.combine(
+                viewModel.healthReadings,
+                viewModel.doseLogs
+            ) { readings, logs ->
+                Pair(readings.size, logs.size)
+            }.collectLatest { (readingCount, logCount) ->
+                tvExportSummary?.text = "$readingCount readings and $logCount dose logs ready to share"
+            }
+        }
+
+        // Feature 5: write the health history to a CSV file and open the Android
+        // share sheet so the patient can email it to their doctor.
+        btnExportCsv?.setOnClickListener {
+            val readings = viewModel.healthReadings.value
+            val logs = viewModel.doseLogs.value
+
+            // Nothing to export yet, so tell the user rather than sharing an empty file
+            if (readings.isEmpty() && logs.isEmpty()) {
+                Toast.makeText(activity, "No health records to export yet", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val patientName = viewModel.userSession.value?.fullName ?: "DoseMate Patient"
+            val file = com.example.util.HealthDataExporter.writeCsvFile(
+                context = activity,
+                patientName = patientName,
+                readings = readings,
+                doseLogs = logs
+            )
+
+            if (file == null) {
+                Toast.makeText(activity, "Could not create the export file", Toast.LENGTH_SHORT).show()
+                android.util.Log.e("HealthDataExporter", "Export failed, file was null")
+                return@setOnClickListener
+            }
+
+            Toast.makeText(
+                activity,
+                "Exported ${readings.size} readings and ${logs.size} dose logs",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            com.example.util.HealthDataExporter.shareCsvFile(activity, file)
         }
 
         renderCalendarGrid()
