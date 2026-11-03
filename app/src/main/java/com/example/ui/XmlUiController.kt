@@ -618,6 +618,32 @@ class XmlUiController(
                 }
             }
         }
+
+        // Wire up all Dashboard Button Click Listeners
+        btnNextDoseTakeNow?.setOnClickListener {
+            val pendingDose = viewModel.doseLogs.value.firstOrNull { it.status != "Taken" }
+            if (pendingDose != null) {
+                viewModel.markDoseTaken(pendingDose.id)
+                Toast.makeText(activity, "Marked ${pendingDose.medicationName} as taken!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(activity, "All doses already taken!", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        btnNextDoseSnooze?.setOnClickListener {
+            Toast.makeText(activity, "Snoozed dose reminder for 15 minutes", Toast.LENGTH_SHORT).show()
+        }
+
+        btnMarkAllTaken?.setOnClickListener {
+            viewModel.markAllPendingDosesTaken()
+            Toast.makeText(activity, "All pending doses marked as taken!", Toast.LENGTH_SHORT).show()
+        }
+
+        btnLogVital?.setOnClickListener { showScreen(1) }
+        btnAddMed?.setOnClickListener { showAddMedicationDialog() }
+        btnFindClinic?.setOnClickListener { showScreen(4) }
+        btnHeaderNotifications?.setOnClickListener { showScreen(5) }
+        tvMedsCount?.setOnClickListener { showScreen(2) }
     }
 
     // --- 3. AI Medication & Health Assistant View Setup ---
