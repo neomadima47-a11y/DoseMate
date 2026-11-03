@@ -8,6 +8,7 @@ import com.example.data.HealthBridgeDatabase
 import com.example.data.HealthBridgeRepository
 import com.example.data.HealthReadingEntity
 import com.example.data.MedicationEntity
+import com.example.data.DisplayClinic
 import com.example.data.OpenFdaDrugClient
 import com.example.data.DrugVerificationResult
 import com.example.data.DrugInteractionAlert

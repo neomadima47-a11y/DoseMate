@@ -17,3 +17,15 @@ data class ClinicEntity(
     val latitude: Double? = null,
     val longitude: Double? = null
 )
+
+data class DisplayClinic(
+    val id: String,
+    val name: String,
+    val distanceKm: Double,
+    val openHours: String,
+    val address: String,
+    val phone: String,
+    val isNearest: Boolean = false,
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0
+)
