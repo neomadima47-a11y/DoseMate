@@ -18,6 +18,9 @@ class HealthBridgeRepository(
     val pendingSyncCount: Flow<Int> = healthReadingDao.getPendingCount()
     val clinics: Flow<List<ClinicEntity>> = clinicDao.getAllClinics()
 
+    // Feature 4: medications that have dropped to or below their refill threshold.
+    val lowStockMedications: Flow<List<MedicationEntity>> = medicationDao.getLowStockMedications()
+
     suspend fun initializeDefaultDataIfEmpty() {
         // Initialize Default User Session (Always keep logged in)
         val currentUser = userDao.getUserSession().first()
@@ -234,7 +237,8 @@ class HealthBridgeRepository(
         dosage: String,
         frequency: String,
         reminderTimes: String,
-        startDateIso: String = ""
+        startDateIso: String = "",
+        packSize: Int = 0
     ) {
         val medication = MedicationEntity(
             name = name,
@@ -242,7 +246,10 @@ class HealthBridgeRepository(
             frequency = frequency,
             reminderTimes = reminderTimes,
             status = "Active",
-            isPendingSync = true
+            isPendingSync = true,
+            // A new pack starts full, so the remaining count equals the pack size.
+            pillsRemaining = packSize,
+            packSize = packSize
         )
         val medId = medicationDao.insertMedication(medication)
 
@@ -307,14 +314,21 @@ class HealthBridgeRepository(
 
     suspend fun markDoseTaken(doseLogId: Long, timeStr: String) {
         medicationDao.updateDoseStatus(doseLogId, "Taken", timeStr)
-        
+
         try {
             val allLogs = medicationDao.getAllDoseLogs().first()
             val log = allLogs.find { it.id == doseLogId }
             if (log != null) {
+                // Feature 4: a taken dose removes one tablet from the pack.
+                val med = medicationDao.getMedicationById(log.medicationId)
+                if (med != null && med.packSize > 0) {
+                    medicationDao.decrementPillCount(log.medicationId)
+                    Log.d("RefillTracker", "Decremented ${med.name}: ${med.pillsRemaining - 1} of ${med.packSize} tablets left")
+                }
+
                 val user = userDao.getUserSession().first()
                 val userEmail = (user?.email ?: "anonymous").replace(".", "_")
-                
+
                 FirestoreClient.getDoseLogsCollection()
                     .document("${userEmail}_log_${log.medicationId}_${log.date}_${log.scheduledTime.hashCode()}")
                     .set(log.copy(isPendingSync = false))
@@ -324,6 +338,15 @@ class HealthBridgeRepository(
         } catch (e: Exception) {
             Log.e("FirestoreSync", "Dose log sync error: ${e.message}")
         }
+    }
+
+    /**
+     * Feature 4: resets a medication's remaining tablet count back to a full pack.
+     * Called when the patient collects a new prescription.
+     */
+    suspend fun refillMedication(id: Long, packSize: Int) {
+        medicationDao.updateRefillCount(id, packSize, packSize)
+        Log.d("RefillTracker", "Refilled medication $id to $packSize tablets")
     }
 
     suspend fun deleteMedication(id: Long) {
@@ -363,7 +386,7 @@ class HealthBridgeRepository(
         try {
             val user = userDao.getUserSession().first()
             val userEmail = (user?.email ?: "anonymous").replace(".", "_")
-            
+
             FirestoreClient.getReadingsCollection()
                 .document("${userEmail}_reading_$timestamp")
                 .set(reading)

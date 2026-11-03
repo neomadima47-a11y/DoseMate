@@ -13,7 +13,9 @@ import androidx.room.RoomDatabase
         HealthReadingEntity::class,
         ClinicEntity::class
     ],
-    version = 4,
+    // v5 adds the refill tracking columns (pillsRemaining, packSize,
+    // refillThreshold) to the medications table.
+    version = 5,
     exportSchema = false
 )
 abstract class HealthBridgeDatabase : RoomDatabase() {
@@ -33,8 +35,8 @@ abstract class HealthBridgeDatabase : RoomDatabase() {
                     HealthBridgeDatabase::class.java,
                     "healthbridge_database"
                 )
-                .fallbackToDestructiveMigration(dropAllTables = true)
-                .build()
+                    .fallbackToDestructiveMigration(dropAllTables = true)
+                    .build()
                 INSTANCE = instance
                 instance
             }

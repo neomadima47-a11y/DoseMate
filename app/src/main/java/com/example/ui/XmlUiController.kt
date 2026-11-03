@@ -60,6 +60,11 @@ class XmlUiController(
         onMarkTaken = { doseId ->
             viewModel.markDoseTaken(doseId)
             Toast.makeText(activity, "Marked dose taken!", Toast.LENGTH_SHORT).show()
+        },
+        // Feature 4: refill resets the pack back to full
+        onRefill = { medId, packSize ->
+            viewModel.refillMedication(medId, packSize)
+            Toast.makeText(activity, "Refilled to $packSize tablets", Toast.LENGTH_SHORT).show()
         }
     )
 
@@ -854,7 +859,10 @@ class XmlUiController(
             kotlinx.coroutines.flow.combine(
                 viewModel.doseLogs,
                 viewModel.medications
-            ) { doses, _ ->
+            ) { doses, meds ->
+                // Feature 4: give the adapter the medication rows so each card
+                // can show its remaining tablet count.
+                medicationAdapter.updateMedications(meds)
                 applyFilter(currentFilter, doses)
             }.collectLatest {}
         }
@@ -865,6 +873,7 @@ class XmlUiController(
     fun showAddMedicationDialog(prefilledName: String = "") {
         val dialogView = LayoutInflater.from(activity).inflate(R.layout.dialog_add_medication, null)
         val etName = dialogView.findViewById<EditText>(R.id.et_dialog_med_name)
+        val etPackSize = dialogView.findViewById<EditText>(R.id.et_dialog_pack_size)
         val tvStartDateVal = dialogView.findViewById<TextView>(R.id.tv_dialog_start_date_val)
         val btnPickStartDate = dialogView.findViewById<Button>(R.id.btn_dialog_pick_start_date)
         val spinnerFreq = dialogView.findViewById<android.widget.Spinner>(R.id.spinner_dialog_frequency)
@@ -960,6 +969,15 @@ class XmlUiController(
                     return@setPositiveButton
                 }
 
+                // Feature 4: pack size is optional. A blank or invalid entry means
+                // the patient does not want refill tracking for this medication.
+                val packSizeInput = etPackSize?.text?.toString()?.trim() ?: ""
+                val packSize = packSizeInput.toIntOrNull() ?: 0
+                if (packSizeInput.isNotBlank() && packSize <= 0) {
+                    Toast.makeText(activity, "Tablets in pack must be a number greater than 0", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+
                 val selectedFreqPos = spinnerFreq?.selectedItemPosition ?: 0
                 val doseCount = selectedFreqPos + 1
                 val freqText = when (doseCount) {
@@ -979,8 +997,16 @@ class XmlUiController(
                 val defaultDosage = "1 dose"
                 val startDateIso = startDateIsoFormat.format(selectedStartCal.time)
 
-                viewModel.addMedication(name, defaultDosage, freqText, timesFormatted, startDateIso)
-                Toast.makeText(activity, "Scheduled $name ($freqText at $timesFormatted starting $startDateIso)", Toast.LENGTH_LONG).show()
+                viewModel.addMedication(name, defaultDosage, freqText, timesFormatted, startDateIso, packSize)
+
+                android.util.Log.d("RefillTracker", "Added $name with pack size $packSize")
+
+                val refillNote = if (packSize > 0) " — tracking $packSize tablets" else ""
+                Toast.makeText(
+                    activity,
+                    "Scheduled $name ($freqText at $timesFormatted)$refillNote",
+                    Toast.LENGTH_LONG
+                ).show()
             }
             .setNegativeButton("Cancel", null)
             .show()

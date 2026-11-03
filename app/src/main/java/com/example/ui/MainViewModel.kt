@@ -265,9 +265,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun addMedication(name: String, dosage: String, frequency: String, reminderTimes: String, startDateIso: String = "") {
+    fun addMedication(
+        name: String,
+        dosage: String,
+        frequency: String,
+        reminderTimes: String,
+        startDateIso: String = "",
+        packSize: Int = 0
+    ) {
         viewModelScope.launch {
-            repository.addMedication(name, dosage, frequency, reminderTimes, startDateIso)
+            repository.addMedication(name, dosage, frequency, reminderTimes, startDateIso, packSize)
+        }
+    }
+
+    // --- Refill tracking (Feature 4) ---
+
+    /**
+     * Active medications whose remaining tablet count has dropped to or below
+     * their refill threshold. The Dashboard observes this to show a warning.
+     */
+    val lowStockMedications: StateFlow<List<MedicationEntity>> = repository.lowStockMedications
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    /** Resets a medication's tablet count back to a full pack after collection. */
+    fun refillMedication(id: Long, packSize: Int) {
+        viewModelScope.launch {
+            repository.refillMedication(id, packSize)
+            android.util.Log.d("RefillTracker", "Refilled medication $id with $packSize tablets")
         }
     }
 

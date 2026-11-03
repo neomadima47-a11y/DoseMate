@@ -12,7 +12,16 @@ data class MedicationEntity(
     val reminderTimes: String, // e.g. "7:00 AM, 7:00 PM"
     val status: String = "Active", // "Active", "Ended"
     val createdTimestamp: Long = System.currentTimeMillis(),
-    val isPendingSync: Boolean = true
+    val isPendingSync: Boolean = true,
+
+    // --- Refill tracking (Feature 4) ---
+    // Number of tablets currently left in the pack. Decremented automatically
+    // every time a dose is marked as taken.
+    val pillsRemaining: Int = 0,
+    // Size of a full pack, used to work out the percentage left.
+    val packSize: Int = 0,
+    // Warn the patient once the remaining count drops to this number.
+    val refillThreshold: Int = 5
 )
 
 @Entity(tableName = "dose_logs")

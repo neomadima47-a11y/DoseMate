@@ -65,6 +65,27 @@ interface MedicationDao {
 
     @Query("UPDATE medications SET status = :status WHERE id = :id")
     suspend fun updateMedicationStatus(id: Long, status: String)
+
+    // --- Refill tracking (Feature 4) ---
+
+    /** Returns a single medication, used when a dose is logged against it. */
+    @Query("SELECT * FROM medications WHERE id = :id LIMIT 1")
+    suspend fun getMedicationById(id: Long): MedicationEntity?
+
+    /**
+     * Removes one tablet from the remaining count when a dose is taken.
+     * MAX(..., 0) stops the count going negative if the pack is already empty.
+     */
+    @Query("UPDATE medications SET pillsRemaining = MAX(pillsRemaining - 1, 0), isPendingSync = 1 WHERE id = :id")
+    suspend fun decrementPillCount(id: Long)
+
+    /** Refills the pack back to a full count, used by the Refill button. */
+    @Query("UPDATE medications SET pillsRemaining = :pills, packSize = :packSize, isPendingSync = 1 WHERE id = :id")
+    suspend fun updateRefillCount(id: Long, pills: Int, packSize: Int)
+
+    /** Medications that have dropped to or below their warning threshold. */
+    @Query("SELECT * FROM medications WHERE status = 'Active' AND packSize > 0 AND pillsRemaining <= refillThreshold ORDER BY pillsRemaining ASC")
+    fun getLowStockMedications(): Flow<List<MedicationEntity>>
 }
 
 @Dao

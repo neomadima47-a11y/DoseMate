@@ -48,6 +48,38 @@
             android:textSize="14sp"
             android:background="@drawable/bg_edit_text" />
 
+        <!-- Pack size for refill tracking (Feature 4) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="Tablets in Pack (for refill tracking)"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_secondary" />
+
+        <EditText
+            android:id="@+id/et_dialog_pack_size"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="6dp"
+            android:hint="e.g. 30 (leave blank to skip tracking)"
+            android:inputType="number"
+            android:maxLength="4"
+            android:paddingHorizontal="14dp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_muted"
+            android:textSize="14sp"
+            android:background="@drawable/bg_edit_text" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="DoseMate counts down one tablet each time a dose is taken and warns you when 5 or fewer remain."
+            android:textSize="11sp"
+            android:textColor="@color/text_muted" />
+
         <!-- Schedule Start Date -->
         <TextView
             android:layout_width="wrap_content"

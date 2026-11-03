@@ -74,6 +74,57 @@
             android:visibility="gone" />
     </LinearLayout>
 
+    <!-- Refill tracking row (Feature 4). Hidden when no pack size is set. -->
+    <LinearLayout
+        android:id="@+id/layout_refill_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="📦"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/tv_refill_count"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="28 of 30 tablets left"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="@color/health_green" />
+
+        <Button
+            android:id="@+id/btn_refill_med"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:background="@drawable/bg_button_secondary"
+            android:text="Refill"
+            android:textSize="11sp"
+            android:textColor="@color/teal_accent"
+            android:paddingHorizontal="14dp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/pb_refill_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="6dp"
+        android:layout_marginTop="6dp"
+        android:max="100"
+        android:progress="93"
+        android:progressTint="@color/health_green"
+        android:progressBackgroundTint="@color/dark_card_stroke"
+        android:visibility="gone" />
+
     <!-- Bottom Action Row -->
     <LinearLayout
         android:id="@+id/layout_med_action_row"

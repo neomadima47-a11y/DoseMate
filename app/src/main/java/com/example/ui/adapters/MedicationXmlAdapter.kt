@@ -6,15 +6,24 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.CheckBox
+import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.R
 import com.example.data.DoseLogEntity
+import com.example.data.MedicationEntity
 
 class MedicationXmlAdapter(
     private var items: List<DoseLogEntity> = emptyList(),
-    private val onMarkTaken: (Long) -> Unit
+    private val onMarkTaken: (Long) -> Unit,
+    // Feature 4: refill tracking needs the parent medication for each dose,
+    // because the remaining tablet count is stored on the medication row.
+    private val onRefill: ((Long, Int) -> Unit)? = null
 ) : RecyclerView.Adapter<MedicationXmlAdapter.ViewHolder>() {
+
+    /** Medication rows keyed by id, used to read pack size and remaining count. */
+    private var medicationsById: Map<Long, MedicationEntity> = emptyMap()
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val tvName: TextView = itemView.findViewById(R.id.tv_med_name)
@@ -23,6 +32,12 @@ class MedicationXmlAdapter(
         val tvStatusDesc: TextView? = itemView.findViewById(R.id.tv_med_status_desc)
         val btnAction: Button? = itemView.findViewById(R.id.btn_mark_dose_action)
         val cbTaken: CheckBox? = itemView.findViewById(R.id.cb_taken)
+
+        // Refill tracking views
+        val layoutRefill: LinearLayout? = itemView.findViewById(R.id.layout_refill_row)
+        val tvRefillCount: TextView? = itemView.findViewById(R.id.tv_refill_count)
+        val pbRefill: ProgressBar? = itemView.findViewById(R.id.pb_refill_progress)
+        val btnRefill: Button? = itemView.findViewById(R.id.btn_refill_med)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -78,6 +93,8 @@ class MedicationXmlAdapter(
             }
         }
 
+        bindRefillRow(holder, item)
+
         holder.cbTaken?.setOnCheckedChangeListener(null)
         holder.cbTaken?.isChecked = isTaken
         holder.cbTaken?.isEnabled = !isTaken
@@ -88,10 +105,65 @@ class MedicationXmlAdapter(
         }
     }
 
+    /**
+     * Shows the remaining tablet count for medications that have refill
+     * tracking switched on. Medications added without a pack size keep the
+     * row hidden, so the card looks exactly as it did before.
+     */
+    private fun bindRefillRow(holder: ViewHolder, item: DoseLogEntity) {
+        val med = medicationsById[item.medicationId]
+
+        if (med == null || med.packSize <= 0) {
+            holder.layoutRefill?.visibility = View.GONE
+            holder.pbRefill?.visibility = View.GONE
+            return
+        }
+
+        holder.layoutRefill?.visibility = View.VISIBLE
+        holder.pbRefill?.visibility = View.VISIBLE
+
+        val remaining = med.pillsRemaining
+        val total = med.packSize
+        val percent = if (total > 0) (remaining * 100) / total else 0
+        val isLow = remaining <= med.refillThreshold
+
+        holder.tvRefillCount?.text = when {
+            remaining == 0 -> "Pack empty — collect a refill"
+            // "Only" is misleading on a pack that has not been used yet
+            isLow && remaining < total -> "Only $remaining of $total tablets left"
+            else -> "$remaining of $total tablets left"
+        }
+
+        val countColour = when {
+            remaining == 0 -> "#EF4444"
+            isLow -> "#F59E0B"
+            else -> "#10B981"
+        }
+        holder.tvRefillCount?.setTextColor(Color.parseColor(countColour))
+        holder.pbRefill?.progress = percent
+        holder.pbRefill?.progressTintList = android.content.res.ColorStateList.valueOf(Color.parseColor(countColour))
+
+        // The Refill button only appears once stock is actually low
+        if (isLow && onRefill != null) {
+            holder.btnRefill?.visibility = View.VISIBLE
+            holder.btnRefill?.setOnClickListener {
+                onRefill.invoke(med.id, med.packSize)
+            }
+        } else {
+            holder.btnRefill?.visibility = View.GONE
+        }
+    }
+
     override fun getItemCount(): Int = items.size
 
     fun updateData(newItems: List<DoseLogEntity>) {
         items = newItems
+        notifyDataSetChanged()
+    }
+
+    /** Supplies the medication rows so the refill counts can be displayed. */
+    fun updateMedications(medications: List<MedicationEntity>) {
+        medicationsById = medications.associateBy { it.id }
         notifyDataSetChanged()
     }
 }
