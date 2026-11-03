@@ -1593,11 +1593,16 @@ class XmlUiController(
 
         val switchReminders = view.findViewById<android.widget.Switch>(R.id.switch_reminders)
 
+        // Light / dark appearance controls
+        val switchDarkTheme = view.findViewById<android.widget.Switch>(R.id.switch_dark_theme)
+        val tvActiveTheme = view.findViewById<TextView>(R.id.tv_active_theme)
+        val tvThemeIcon = view.findViewById<TextView>(R.id.tv_theme_icon)
+
         val btnCallEmergency = view.findViewById<Button>(R.id.btn_call_emergency_contact)
         val btnCallDoctor = view.findViewById<Button>(R.id.btn_call_doctor)
         val btnSignOut = view.findViewById<Button>(R.id.btn_sign_out)
 
-        // Observe user session
+        // Observe user session and keep every control in sync with saved settings
         scope.launch {
             viewModel.userSession.collectLatest { session ->
                 if (session == null) return@collectLatest
@@ -1616,7 +1621,17 @@ class XmlUiController(
                     switchReminders?.isChecked = session.medicationRemindersEnabled
                 }
 
-                applyThemeToXmlRoot(true)
+                // Reflect the stored theme choice without firing the listener again
+                if (switchDarkTheme?.isChecked != session.darkThemeEnabled) {
+                    switchDarkTheme?.setOnCheckedChangeListener(null)
+                    switchDarkTheme?.isChecked = session.darkThemeEnabled
+                    attachThemeSwitchListener(switchDarkTheme, tvActiveTheme, tvThemeIcon)
+                }
+                tvActiveTheme?.text = if (session.darkThemeEnabled) "Dark mode" else "Light mode"
+                tvThemeIcon?.text = if (session.darkThemeEnabled) "🌙" else "☀️"
+
+                // Repaint using the saved preference rather than a hard-coded value
+                applyThemeToXmlRoot(session.darkThemeEnabled)
             }
         }
 
@@ -1655,6 +1670,9 @@ class XmlUiController(
             }
         }
 
+        // Wire the appearance switch for the first time
+        attachThemeSwitchListener(switchDarkTheme, tvActiveTheme, tvThemeIcon)
+
         btnCallEmergency?.setOnClickListener {
             val intent = Intent(Intent.ACTION_DIAL, Uri.parse("tel:+27123456789"))
             activity.startActivity(intent)
@@ -1672,30 +1690,85 @@ class XmlUiController(
         }
     }
 
-    private fun applyThemeToXmlRoot(isDark: Boolean = true) {
-        val rootBg = android.graphics.Color.parseColor("#111818")
-        val topBottomBg = android.graphics.Color.parseColor("#1A2322")
-        val textColor = android.graphics.Color.parseColor("#F3F4F6")
-        val textSecColor = android.graphics.Color.parseColor("#9CA3AF")
-        val cardBg = android.graphics.Color.parseColor("#1A2322")
+    /**
+     * Attaches the listener for the light / dark appearance switch.
+     *
+     * Extracted into its own function because the listener has to be detached
+     * and reattached whenever the session observer sets the switch state, so
+     * that restoring the saved value does not trigger a save of its own.
+     */
+    private fun attachThemeSwitchListener(
+        switchDarkTheme: android.widget.Switch?,
+        tvActiveTheme: TextView?,
+        tvThemeIcon: TextView?
+    ) {
+        switchDarkTheme?.setOnCheckedChangeListener { _, isChecked ->
+            val currentTheme = viewModel.userSession.value?.darkThemeEnabled ?: true
+            if (isChecked != currentTheme) {
+                android.util.Log.d("XmlUiController", "User switched dark theme to $isChecked")
 
-        rootContainer.setBackgroundColor(rootBg)
-        fragmentContainer?.setBackgroundColor(rootBg)
-        currentScreenLayout?.setBackgroundColor(rootBg)
+                // Persist the choice to the Room user_session table
+                viewModel.toggleDarkTheme(isChecked)
 
-        val topBar = rootContainer.findViewById<View>(R.id.app_top_bar)
-        topBar?.setBackgroundColor(topBottomBg)
+                // Repaint immediately so the change is visible without a restart
+                applyThemeToXmlRoot(isChecked)
 
-        val tvTitle = rootContainer.findViewById<TextView>(R.id.tv_app_title)
-        tvTitle?.setTextColor(textColor)
+                tvActiveTheme?.text = if (isChecked) "Dark mode" else "Light mode"
+                tvThemeIcon?.text = if (isChecked) "🌙" else "☀️"
 
-        bottomNavBar?.setBackgroundColor(topBottomBg)
-
-        currentScreenLayout?.let { root ->
-            updateViewColorsRecursively(root, isDark, rootBg, cardBg, textColor, textSecColor)
+                Toast.makeText(
+                    activity,
+                    if (isChecked) "Dark mode enabled" else "Light mode enabled",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
     }
 
+    /**
+     * Repaints the inflated XML view tree for the chosen theme.
+     *
+     * The layouts are authored with the dark palette, so this walks the tree
+     * and swaps the known dark hex values for light equivalents when isDark
+     * is false. Brand colours such as teal, amber and red are left untouched.
+     */
+    private fun applyThemeToXmlRoot(isDark: Boolean = true) {
+        val rootBgInt  = android.graphics.Color.parseColor(if (isDark) "#111818" else "#F7F9F8")
+        val barBgInt   = android.graphics.Color.parseColor(if (isDark) "#1A2322" else "#FFFFFF")
+        val textInt    = android.graphics.Color.parseColor(if (isDark) "#F3F4F6" else "#16202B")
+        val textSecInt = android.graphics.Color.parseColor(if (isDark) "#9CA3AF" else "#5A6B7A")
+        val cardBgInt  = android.graphics.Color.parseColor(if (isDark) "#1A2322" else "#FFFFFF")
+
+        android.util.Log.d("XmlUiController", "applyThemeToXmlRoot called with isDark=$isDark")
+
+        rootContainer.setBackgroundColor(rootBgInt)
+        fragmentContainer?.setBackgroundColor(rootBgInt)
+        currentScreenLayout?.setBackgroundColor(rootBgInt)
+
+        val topBar = rootContainer.findViewById<View>(R.id.app_top_bar)
+        topBar?.setBackgroundColor(barBgInt)
+
+        val tvTitle = rootContainer.findViewById<TextView>(R.id.tv_app_title)
+        tvTitle?.setTextColor(textInt)
+
+        bottomNavBar?.setBackgroundColor(barBgInt)
+
+        currentScreenLayout?.let { root ->
+            updateViewColorsRecursively(root, isDark, rootBgInt, cardBgInt, textInt, textSecInt)
+        }
+    }
+
+    /**
+     * Recursively applies the theme colours to every child view.
+     *
+     * Card containers are detected by comparing their background to the
+     * bg_card_dark drawable, because views inflated from the same drawable
+     * resource share a constant state. Only those are tinted, which leaves
+     * badges, circular icon chips and coloured buttons exactly as designed.
+     *
+     * TextViews are matched on their current colour so that only the neutral
+     * text colours change and brand colours survive the swap.
+     */
     private fun updateViewColorsRecursively(
         view: View,
         isDark: Boolean,
@@ -1704,26 +1777,40 @@ class XmlUiController(
         textPrimaryCol: Int,
         textSecCol: Int
     ) {
+        // Tint card containers so text stays readable in both themes
         if (view is ViewGroup) {
+            val cardState = ContextCompat.getDrawable(activity, R.drawable.bg_card_dark)?.constantState
+            if (cardState != null && view.background?.constantState == cardState) {
+                val tinted = ContextCompat.getDrawable(activity, R.drawable.bg_card_dark)?.mutate()
+                tinted?.setTint(cardCol)
+                view.background = tinted
+            }
             for (i in 0 until view.childCount) {
                 updateViewColorsRecursively(view.getChildAt(i), isDark, bgCol, cardCol, textPrimaryCol, textSecCol)
             }
         }
 
-        if (view is TextView) {
+        if (view is TextView && view !is EditText && view !is Button) {
             val currentHex = String.format("#%06X", (0xFFFFFF and view.currentTextColor))
-            if (currentHex.equals("#F3F4F6", ignoreCase = true) || currentHex.equals("#0F172A", ignoreCase = true) || currentHex.equals("#F9FAFB", ignoreCase = true) || currentHex.equals("#111827", ignoreCase = true)) {
-                view.setTextColor(textPrimaryCol)
-            } else if (currentHex.equals("#9CA3AF", ignoreCase = true) || currentHex.equals("#475569", ignoreCase = true) || currentHex.equals("#6B7280", ignoreCase = true)) {
-                view.setTextColor(textSecCol)
+            when {
+                currentHex.equals("#F3F4F6", true) ||
+                        currentHex.equals("#F9FAFB", true) ||
+                        currentHex.equals("#0F172A", true) ||
+                        currentHex.equals("#111827", true) ||
+                        currentHex.equals("#16202B", true) -> view.setTextColor(textPrimaryCol)
+
+                currentHex.equals("#9CA3AF", true) ||
+                        currentHex.equals("#6B7280", true) ||
+                        currentHex.equals("#475569", true) ||
+                        currentHex.equals("#5A6B7A", true) -> view.setTextColor(textSecCol)
             }
         }
 
         if (view is EditText) {
             view.setTextColor(textPrimaryCol)
             view.setHintTextColor(textSecCol)
-            val editBg = if (isDark) android.graphics.Color.parseColor("#24302E") else android.graphics.Color.parseColor("#F1F5F9")
-            view.setBackgroundColor(editBg)
+            val editBg = if (isDark) "#24302E" else "#EEF2F1"
+            view.setBackgroundColor(android.graphics.Color.parseColor(editBg))
         }
     }
 }
