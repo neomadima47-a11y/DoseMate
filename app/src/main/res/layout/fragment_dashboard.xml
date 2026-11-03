@@ -61,6 +61,63 @@
                     android:background="@drawable/bg_circle_icon" />
             </LinearLayout>
 
+            <!-- Refill warning banner (Feature 4). Hidden unless a medication
+            has dropped to or below its refill threshold. -->
+            <LinearLayout
+                android:id="@+id/card_refill_warning"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_badge_amber"
+                android:padding="14dp"
+                android:layout_marginBottom="16dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="12dp"
+                    android:text="📦"
+                    android:textSize="22sp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tv_refill_warning_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Refill needed"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/health_amber" />
+
+                    <TextView
+                        android:id="@+id/tv_refill_warning_detail"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Metformin — 3 tablets left"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_secondary" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btn_refill_warning_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="34dp"
+                    android:background="@drawable/bg_button_secondary"
+                    android:text="View"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/health_amber"
+                    android:paddingHorizontal="14dp" />
+            </LinearLayout>
+
             <!-- 2. HERO CARD: Next Dose Up Live Countdown Banner -->
             <LinearLayout
                 android:id="@+id/card_next_dose_hero"

@@ -538,6 +538,12 @@ class XmlUiController(
         val rvTodayMeds = view.findViewById<RecyclerView>(R.id.rv_today_medications)
         val tvMedsCount = view.findViewById<TextView>(R.id.tv_meds_count_badge)
 
+        // Refill warning banner (Feature 4)
+        val cardRefillWarning = view.findViewById<LinearLayout>(R.id.card_refill_warning)
+        val tvRefillWarningTitle = view.findViewById<TextView>(R.id.tv_refill_warning_title)
+        val tvRefillWarningDetail = view.findViewById<TextView>(R.id.tv_refill_warning_detail)
+        val btnRefillWarningView = view.findViewById<Button>(R.id.btn_refill_warning_view)
+
         // Next Dose Up Hero Countdown Card Controls
         val tvNextDoseCountdown = view.findViewById<TextView>(R.id.tv_next_dose_countdown)
         val tvNextDoseName = view.findViewById<TextView>(R.id.tv_next_dose_name_dosage)
@@ -565,6 +571,10 @@ class XmlUiController(
             ) { medsList, logsList ->
                 Pair(medsList, logsList)
             }.collectLatest { (medsList, logsList) ->
+                // Feature 4: the adapter needs the medication rows so each card
+                // can display its remaining tablet count.
+                medicationAdapter.updateMedications(medsList)
+
                 val activeMeds = medsList.filter { it.status.equals("Active", ignoreCase = true) }
                 val displayDoses = mutableListOf<DoseLogEntity>()
 
@@ -649,6 +659,43 @@ class XmlUiController(
         btnFindClinic?.setOnClickListener { showScreen(4) }
         btnHeaderNotifications?.setOnClickListener { showScreen(5) }
         tvMedsCount?.setOnClickListener { showScreen(2) }
+
+        // Feature 4: show a refill warning whenever an active medication has
+        // dropped to or below its threshold. The banner stays hidden otherwise.
+        scope.launch {
+            viewModel.lowStockMedications.collectLatest { lowStock ->
+                if (lowStock.isEmpty()) {
+                    cardRefillWarning?.visibility = View.GONE
+                    return@collectLatest
+                }
+
+                cardRefillWarning?.visibility = View.VISIBLE
+
+                val first = lowStock.first()
+                val anyEmpty = lowStock.any { it.pillsRemaining == 0 }
+
+                tvRefillWarningTitle?.text = when {
+                    anyEmpty -> "Medication finished"
+                    lowStock.size == 1 -> "Refill needed"
+                    else -> "${lowStock.size} medications need a refill"
+                }
+
+                tvRefillWarningDetail?.text = if (lowStock.size == 1) {
+                    if (first.pillsRemaining == 0) {
+                        "${first.name} — pack is empty"
+                    } else {
+                        "${first.name} — ${first.pillsRemaining} of ${first.packSize} tablets left"
+                    }
+                } else {
+                    lowStock.joinToString(", ") { "${it.name} (${it.pillsRemaining})" }
+                }
+
+                android.util.Log.d("RefillTracker", "Dashboard warning: ${lowStock.size} medication(s) low on stock")
+            }
+        }
+
+        // Tapping View jumps to the Medications screen where the Refill button lives
+        btnRefillWarningView?.setOnClickListener { showScreen(2) }
     }
 
     // --- 3. AI Medication & Health Assistant View Setup ---
