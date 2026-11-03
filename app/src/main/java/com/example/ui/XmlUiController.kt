@@ -229,7 +229,7 @@ class XmlUiController(
         val container = fragmentContainer ?: rootContainer
         container.removeAllViews()
 
-        if (index == -1 || index == 1) {
+        if (index == -1) {
             bottomNavBar?.visibility = View.GONE
         } else {
             bottomNavBar?.visibility = View.VISIBLE
