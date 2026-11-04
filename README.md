@@ -26,7 +26,7 @@ Built entirely in **Kotlin with XML layouts**.
 
 A full walkthrough of the app with voice-over narration:
 
-**[Watch the DoseMate demo](INSERT_YOUTUBE_LINK_HERE)**
+**[Watch the DoseMate demo](https://drive.google.com/file/d/1gRDX257KAG1aV3kev7PfuiYL49-llRxa/view?usp=sharing)**
 
 ---
 
@@ -66,7 +66,7 @@ The interface is available in **English, Afrikaans, isiZulu, Sesotho, Sepedi, Se
 | Layer | Technology |
 |---|---|
 | Language | Kotlin |
-| UI | XML layouts, Material Components, ViewBinding |
+| UI | XML layouts, Material Components |
 | Architecture | MVVM with `ViewModel`, `StateFlow` and Kotlin Coroutines |
 | Local database | Room over SQLite (`HealthBridgeDatabase`, schema v5) |
 | Cloud database | Firebase Cloud Firestore |
@@ -156,7 +156,7 @@ The pipeline in `.github/workflows/android.yml` runs on every push and pull requ
 
 ```bash
 # Clone the repository
-git clone INSERT_GITHUB_REPO_LINK_HERE
+git clone https://github.com/neomadima47-a11y/DoseMate.git
 cd DoseMate
 
 # Build the debug APK
