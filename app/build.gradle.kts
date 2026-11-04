@@ -59,15 +59,22 @@ android {
       }
     }
   }
+
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
   }
+
+  // The entire user interface is built with Kotlin and XML layouts.
+  // Jetpack Compose is disabled: the Compose compiler is not applied, so no
+  // composable code can be compiled into this project.
   buildFeatures {
     compose = false
     buildConfig = true
   }
+
   testOptions { unitTests { isIncludeAndroidResources = true } }
+
   dependenciesInfo {
     includeInApk = false
     includeInBundle = true
@@ -82,45 +89,50 @@ secrets {
   ignoreList.add("FIREBASE_APPCHECK_DEBUG_TOKEN")
 }
 
-// googleServices { missingGoogleServicesStrategy = MissingGoogleServicesStrategy.WARN }
-
-// Some unused dependencies are commented out below instead of being removed.
-// This makes it easy to add them back in the future if needed.
 dependencies {
+  // ---------- Android XML view system ----------
+  // These supply the widgets and containers used by every layout in res/layout.
+  implementation("androidx.appcompat:appcompat:1.7.0")
+  implementation("com.google.android.material:material:1.12.0")
+  implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+  implementation("androidx.recyclerview:recyclerview:1.3.2")
+  implementation("androidx.fragment:fragment-ktx:1.8.5")
+  implementation("androidx.activity:activity-ktx:1.9.3")
+
+  // ---------- Platform BOM ----------
   implementation(platform(libs.firebase.bom))
-  implementation("androidx.activity:activity-ktx:1.9.0")
+
+  // ---------- Core and lifecycle ----------
   implementation(libs.androidx.core.ktx)
+  implementation(libs.androidx.lifecycle.runtime.ktx)
+  implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.7")
+  implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.8.7")
+
+  // ---------- Authentication ----------
   implementation(libs.androidx.credentials)
   implementation(libs.androidx.credentials.play.services)
-  implementation(libs.androidx.lifecycle.runtime.ktx)
+  implementation(libs.googleid)
+  implementation(libs.firebase.auth)
+
+  // ---------- Data ----------
+  implementation(libs.firebase.firestore)
   implementation(libs.androidx.room.ktx)
   implementation(libs.androidx.room.runtime)
   implementation(libs.androidx.work.runtime.ktx)
   implementation(libs.androidx.health.connect)
-  // implementation(libs.coil.compose)
-  implementation(libs.converter.moshi)
-  implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
-  implementation(libs.firebase.auth)
-  implementation(libs.firebase.firestore)
-  implementation(libs.googleid)
-  // implementation(libs.firebase.ai)
-  // Uncomment to use Firestore:
-  // implementation(libs.firebase.firestore)
 
-  // Uncomment ALL FOUR of the following dependencies together to use Firebase Auth and Google
-  // Sign-In via Credential Manager:
-  // implementation(libs.firebase.auth)
-  // implementation(libs.androidx.credentials)
-  // implementation(libs.androidx.credentials.play.services)
-  // implementation(libs.googleid)
-  // implementation(libs.firebase.appcheck.recaptcha)
-  implementation(libs.kotlinx.coroutines.android)
-  implementation(libs.kotlinx.coroutines.core)
-  implementation(libs.logging.interceptor)
+  // ---------- Networking ----------
+  implementation(libs.retrofit)
+  implementation(libs.converter.moshi)
   implementation(libs.moshi.kotlin)
   implementation(libs.okhttp)
+  implementation(libs.logging.interceptor)
+
+  // ---------- AI assistant ----------
+  implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
+
+  // ---------- Location and maps ----------
   implementation(libs.play.services.location)
-  implementation(libs.retrofit)
   implementation(libs.mapbox.maps)
   implementation(libs.mapbox.compose)
   implementation(libs.mapbox.common)
@@ -129,19 +141,26 @@ dependencies {
   implementation(libs.mapbox.navigation.ui.components)
   implementation(libs.mapbox.navigation.voice)
   implementation(libs.mapbox.navigation.tripdata)
-  implementation(libs.mapbox.navigation.copilot)
   implementation(libs.mapbox.search.android)
   implementation(libs.mapbox.search.ui)
   implementation(libs.mapbox.search.place.autocomplete)
-  testImplementation(libs.androidx.core)
-  testImplementation(libs.androidx.junit)
+
+  // ---------- Coroutines ----------
+  implementation(libs.kotlinx.coroutines.android)
+  implementation(libs.kotlinx.coroutines.core)
+
+  // ---------- Unit tests ----------
   testImplementation(libs.junit)
+  testImplementation(libs.androidx.junit)
+  testImplementation(libs.androidx.core)
   testImplementation(libs.kotlinx.coroutines.test)
   testImplementation(libs.robolectric)
-  testImplementation(libs.roborazzi)
-  testImplementation(libs.roborazzi.junit.rule)
+
+  // ---------- Instrumented tests ----------
   androidTestImplementation(libs.androidx.espresso.core)
   androidTestImplementation(libs.androidx.junit)
   androidTestImplementation(libs.androidx.runner)
+
+  // ---------- Annotation processing ----------
   "ksp"(libs.androidx.room.compiler)
 }
